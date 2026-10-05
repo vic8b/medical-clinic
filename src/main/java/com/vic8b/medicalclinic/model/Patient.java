@@ -47,6 +47,26 @@ public class Patient {
         this.birthday = birthday;
     }
 
+    public void update(
+            @NonNull String email,
+            @NonNull String password,
+            @NonNull String idCardNo,
+            @NonNull String firstName,
+            @NonNull String lastName,
+            @NonNull String phoneNumber,
+            @NonNull LocalDate birthday
+    ) {
+        validatePatientData(email, password, idCardNo, firstName, lastName, phoneNumber, birthday);
+
+        this.email = email;
+        this.password = password;
+        this.idCardNo = idCardNo;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phoneNumber = phoneNumber;
+        this.birthday = birthday;
+    }
+
     private static void validatePatientData(
             String email,
             String password,
