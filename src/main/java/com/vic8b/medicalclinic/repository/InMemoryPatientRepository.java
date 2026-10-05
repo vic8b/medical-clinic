@@ -18,9 +18,10 @@ public class InMemoryPatientRepository implements PatientRepository {
         if (patients.containsKey(patient.getId())) {
             throw new PatientAlreadyExistsException(patient.getId());
         }
-
+        if (findByEmail(patient.getEmail()).isPresent()) {
+            throw new PatientAlreadyExistsException(patient.getEmail());
+        }
         patients.put(patient.getId(), patient);
-
         return patient;
     }
 
@@ -28,7 +29,6 @@ public class InMemoryPatientRepository implements PatientRepository {
     public void removeByEmail(@NonNull String email) {
         Patient patient = findByEmail(email)
                 .orElseThrow(() -> new PatientNotFoundException(email));
-
         patients.remove(patient.getId());
     }
 

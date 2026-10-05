@@ -1,6 +1,8 @@
 package com.vic8b.medicalclinic.service;
 
+import com.vic8b.medicalclinic.command.ChangePasswordCommand;
 import com.vic8b.medicalclinic.command.UpdatePatientCommand;
+import com.vic8b.medicalclinic.exception.PatientAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.PatientNotFoundException;
 import com.vic8b.medicalclinic.model.Patient;
 import com.vic8b.medicalclinic.repository.PatientRepository;
@@ -24,12 +26,15 @@ public class PatientService {
         patientRepository.removeByEmail(email);
     }
 
-    public Patient updatePatient(@NonNull UpdatePatientCommand command) {
-        Patient patient = patientRepository.findByEmail(command.currentEmail())
-                .orElseThrow(() -> new PatientNotFoundException(command.currentEmail()));
-
+    public Patient updatePatient(@NonNull String currentEmail, @NonNull UpdatePatientCommand command) {
+        Patient patient = findPatientByEmailOrThrow(currentEmail);
+        patientRepository.findByEmail(command.email())
+                .filter(existingPatient -> !existingPatient.getId().equals(patient.getId()))
+                .ifPresent(existingPatient -> {
+                    throw new PatientAlreadyExistsException(command.email());
+                });
         patient.update(
-                command.newEmail(),
+                command.email(),
                 command.password(),
                 command.idCardNo(),
                 command.firstName(),
@@ -37,16 +42,25 @@ public class PatientService {
                 command.phoneNumber(),
                 command.birthday()
         );
+        return patient;
+    }
 
+    public Patient changePassword(@NonNull String email, @NonNull ChangePasswordCommand command) {
+        Patient patient = findPatientByEmailOrThrow(email);
+        patient.changePassword(command.password());
         return patient;
     }
 
     public Patient getPatientByEmail(@NonNull String email) {
-        return patientRepository.findByEmail(email)
-                .orElseThrow(() -> new PatientNotFoundException(email));
+        return findPatientByEmailOrThrow(email);
     }
 
     public List<Patient> getPatients() {
         return patientRepository.findAll();
+    }
+
+    private Patient findPatientByEmailOrThrow(@NonNull String email) {
+        return patientRepository.findByEmail(email)
+                .orElseThrow(() -> new PatientNotFoundException(email));
     }
 }

@@ -7,8 +7,7 @@ import java.time.LocalDate;
 
 @Builder
 public record UpdatePatientCommand(
-        @NonNull String currentEmail,
-        @NonNull String newEmail,
+        @NonNull String email,
         @NonNull String password,
         @NonNull String idCardNo,
         @NonNull String firstName,

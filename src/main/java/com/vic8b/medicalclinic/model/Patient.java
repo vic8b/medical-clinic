@@ -26,17 +26,9 @@ public class Patient {
     private LocalDate birthday;
 
     @Builder
-    public Patient(
-            @NonNull String email,
-            @NonNull String password,
-            @NonNull String idCardNo,
-            @NonNull String firstName,
-            @NonNull String lastName,
-            @NonNull String phoneNumber,
-            @NonNull LocalDate birthday
-    ) {
+    public Patient(@NonNull String email, @NonNull String password, @NonNull String idCardNo, @NonNull String firstName,
+                   @NonNull String lastName, @NonNull String phoneNumber, @NonNull LocalDate birthday) {
         validatePatientData(email, password, idCardNo, firstName, lastName, phoneNumber, birthday);
-
         this.id = UUID.randomUUID();
         this.email = email;
         this.password = password;
@@ -47,17 +39,9 @@ public class Patient {
         this.birthday = birthday;
     }
 
-    public void update(
-            @NonNull String email,
-            @NonNull String password,
-            @NonNull String idCardNo,
-            @NonNull String firstName,
-            @NonNull String lastName,
-            @NonNull String phoneNumber,
-            @NonNull LocalDate birthday
-    ) {
+    public void update(@NonNull String email, @NonNull String password, @NonNull String idCardNo, @NonNull String firstName,
+                       @NonNull String lastName, @NonNull String phoneNumber, @NonNull LocalDate birthday) {
         validatePatientData(email, password, idCardNo, firstName, lastName, phoneNumber, birthday);
-
         this.email = email;
         this.password = password;
         this.idCardNo = idCardNo;
@@ -65,6 +49,13 @@ public class Patient {
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
         this.birthday = birthday;
+    }
+
+    public void changePassword(@NonNull String newPassword) {
+        if (newPassword.isBlank()) {
+            throw new IllegalArgumentException("Password cannot be blank");
+        }
+        this.password = newPassword;
     }
 
     private static void validatePatientData(
