@@ -1,8 +1,9 @@
 package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.command.ChangePasswordCommand;
+import com.vic8b.medicalclinic.command.CreatePatientCommand;
 import com.vic8b.medicalclinic.command.UpdatePatientCommand;
-import com.vic8b.medicalclinic.model.Patient;
+import com.vic8b.medicalclinic.dto.PatientDto;
 import com.vic8b.medicalclinic.service.PatientService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -19,28 +20,28 @@ public class PatientController {
     private final PatientService patientService;
 
     @GetMapping
-    public List<Patient> getPatients() {
+    public List<PatientDto> getPatients() {
         return patientService.getPatients();
     }
 
     @GetMapping("/{email}")
-    public Patient getPatientByEmail(@PathVariable String email) {
+    public PatientDto getPatientByEmail(@PathVariable String email) {
         return patientService.getPatientByEmail(email);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Patient addPatient(@RequestBody Patient patient) {
-        return patientService.addPatient(patient);
+    public PatientDto addPatient(@RequestBody CreatePatientCommand command) {
+        return patientService.addPatient(command);
     }
 
     @PutMapping("/{email}")
-    public Patient updatePatient(@PathVariable String email, @RequestBody UpdatePatientCommand command) {
+    public PatientDto updatePatient(@PathVariable String email, @RequestBody UpdatePatientCommand command) {
         return patientService.updatePatient(email, command);
     }
 
     @PatchMapping("/{email}/password")
-    public Patient changePassword(@PathVariable String email, @RequestBody ChangePasswordCommand command) {
+    public PatientDto changePassword(@PathVariable String email, @RequestBody ChangePasswordCommand command) {
         return patientService.changePassword(email, command);
     }
 
