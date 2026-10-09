@@ -24,7 +24,7 @@ public class PatientService {
     private final PatientMapper patientMapper;
 
     public PatientDto addPatient(@NonNull CreatePatientCommand command) {
-        Patient patient = patientMapper.toPatient(command);
+        Patient patient = patientMapper.toEntity(command);
         patientRepository.add(patient);
         return patientMapper.toDto(patient);
     }
@@ -35,20 +35,9 @@ public class PatientService {
 
     public PatientDto updatePatient(@NonNull String currentEmail, @NonNull UpdatePatientCommand command) {
         Patient patient = findPatientByEmailOrThrow(currentEmail);
-        patientRepository.findByEmail(command.email())
-                .filter(existingPatient -> !existingPatient.getId().equals(patient.getId()))
-                .ifPresent(existingPatient -> {
-                    throw new PatientAlreadyExistsException(command.email());
-                });
-        patient.update(
-                command.email(),
-                command.password(),
-                command.idCardNo(),
-                command.firstName(),
-                command.lastName(),
-                command.phoneNumber(),
-                command.birthday()
-        );
+        validateEmailAvailability(command, patient);
+        patient.update(command.email(), command.password(), command.idCardNo(), command.firstName(), command.lastName(),
+                command.phoneNumber(), command.birthday());
         return patientMapper.toDto(patient);
     }
 
@@ -63,10 +52,17 @@ public class PatientService {
     }
 
     public List<PatientDto> getPatients() {
-        return patientRepository.findAll()
-                .stream()
+        return patientRepository.findAll().stream()
                 .map(patientMapper::toDto)
                 .toList();
+    }
+
+    private void validateEmailAvailability(UpdatePatientCommand command, Patient patient) {
+        patientRepository.findByEmail(command.email())
+                .filter(existingPatient -> !existingPatient.getId().equals(patient.getId()))
+                .ifPresent(existingPatient -> {
+                    throw new PatientAlreadyExistsException(command.email());
+                });
     }
 
     private Patient findPatientByEmailOrThrow(@NonNull String email) {
