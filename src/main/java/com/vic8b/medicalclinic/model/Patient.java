@@ -58,15 +58,8 @@ public class Patient {
         this.password = newPassword;
     }
 
-    private static void validatePatientData(
-            String email,
-            String password,
-            String idCardNo,
-            String firstName,
-            String lastName,
-            String phoneNumber,
-            LocalDate birthday
-    ) {
+    private static void validatePatientData(String email, String password, String idCardNo, String firstName,
+                                            String lastName, String phoneNumber, LocalDate birthday) {
         if (email.isBlank()) {
             throw new IllegalArgumentException("Email cannot be blank");
         }
