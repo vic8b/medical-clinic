@@ -1,5 +1,6 @@
 package com.vic8b.medicalclinic.model;
 
+import com.vic8b.medicalclinic.exception.PatientInvalidDataException;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -53,7 +54,7 @@ public class Patient {
 
     public void changePassword(@NonNull String newPassword) {
         if (newPassword.isBlank()) {
-            throw new IllegalArgumentException("Password cannot be blank");
+            throw new PatientInvalidDataException("Password cannot be blank");
         }
         this.password = newPassword;
     }
@@ -61,28 +62,28 @@ public class Patient {
     private static void validatePatientData(String email, String password, String idCardNo, String firstName,
                                             String lastName, String phoneNumber, LocalDate birthday) {
         if (email.isBlank()) {
-            throw new IllegalArgumentException("Email cannot be blank");
+            throw new PatientInvalidDataException("Email cannot be blank");
         }
         if (!isEmailValid(email)) {
-            throw new IllegalArgumentException("Invalid email");
+            throw new PatientInvalidDataException("Invalid email");
         }
         if (password.isBlank()) {
-            throw new IllegalArgumentException("Password cannot be blank");
+            throw new PatientInvalidDataException("Password cannot be blank");
         }
         if (idCardNo.isBlank()) {
-            throw new IllegalArgumentException("ID card number cannot be blank");
+            throw new PatientInvalidDataException("ID card number cannot be blank");
         }
         if (firstName.isBlank()) {
-            throw new IllegalArgumentException("First name cannot be blank");
+            throw new PatientInvalidDataException("First name cannot be blank");
         }
         if (lastName.isBlank()) {
-            throw new IllegalArgumentException("Last name cannot be blank");
+            throw new PatientInvalidDataException("Last name cannot be blank");
         }
         if (phoneNumber.isBlank()) {
-            throw new IllegalArgumentException("Phone number cannot be blank");
+            throw new PatientInvalidDataException("Phone number cannot be blank");
         }
         if (birthday.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Birthday cannot be in the future");
+            throw new PatientInvalidDataException("Birthday cannot be in the future");
         }
     }
 
