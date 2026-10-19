@@ -22,6 +22,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,7 +31,6 @@ import static org.mockito.Mockito.when;
 class PatientServiceTest {
     PatientRepository patientRepository;
     PatientMapper mapper;
-
     PatientService patientService;
 
     @BeforeEach
@@ -44,13 +45,19 @@ class PatientServiceTest {
         // given
         CreatePatientCommand command = new CreatePatientCommand("test@gmail.com", "pass1234", "1234", "Wiktor",
                 "Test", "500500500", LocalDate.of(1999, 1, 1));
-        Patient patient = mapper.toEntity(command);
 
         // when
         PatientDto patientDto = patientService.addPatient(command);
 
         // then
-        assertThat(patientDto).isEqualTo(mapper.toDto(patient));
+        assertAll(
+                () -> assertThat(patientDto.email()).isEqualTo("test@gmail.com"),
+                () -> assertThat(patientDto.firstName()).isEqualTo("Wiktor"),
+                () -> assertThat(patientDto.lastName()).isEqualTo("Test"),
+                () -> assertThat(patientDto.phoneNumber()).isEqualTo("500500500"),
+                () -> assertThat(patientDto.birthday()).isEqualTo(LocalDate.of(1999, 1, 1))
+        );
+        verify(patientRepository).add(any(Patient.class));
     }
 
     @Test
@@ -68,35 +75,37 @@ class PatientServiceTest {
     @Test
     void updatePatient_WithCorrectCommand_ReturnedUpdatedPatientDto() {
         // given
-        CreatePatientCommand createPatientCommand = new CreatePatientCommand("test@gmail.com", "pass1234", "1234", "Wiktor",
-                "Test", "500500500", LocalDate.of(1999, 1, 1));
-        Patient patient = mapper.toEntity(createPatientCommand);
-        when(patientRepository.findByEmail(createPatientCommand.email())).thenReturn(Optional.of(patient));
+        String searchedEmail = "test@gmail.com";
+        Patient patient = Patient.builder().email(searchedEmail).password("pass1234").idCardNo("1234").firstName("Wiktor")
+                .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
+        when(patientRepository.findByEmail(searchedEmail)).thenReturn(Optional.of(patient));
         UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("test123@gmail.com", "pass1234", "1234", "Andrzej",
                 "Kowalski", "500500500", LocalDate.of(1999, 1, 1));
         when(patientRepository.findByEmail(updatePatientCommand.email())).thenReturn(Optional.empty());
 
         // when
-        PatientDto result = patientService.updatePatient(createPatientCommand.email(), updatePatientCommand);
+        PatientDto result = patientService.updatePatient(searchedEmail, updatePatientCommand);
 
         // then
-        assertThat(result.email()).isEqualTo(updatePatientCommand.email());
-        assertThat(result.firstName()).isEqualTo(updatePatientCommand.firstName());
-        assertThat(result.lastName()).isEqualTo(updatePatientCommand.lastName());
-        assertThat(patient.getEmail()).isEqualTo(updatePatientCommand.email());
+        assertAll(
+                () -> assertThat(result.email()).isEqualTo("test123@gmail.com"),
+                () -> assertThat(result.firstName()).isEqualTo("Andrzej"),
+                () -> assertThat(result.lastName()).isEqualTo("Kowalski"),
+                () -> assertThat(patient.getEmail()).isEqualTo("test123@gmail.com")
+        );
     }
 
     @Test
     void changePassword_WithCorrectPasswordCommand_PasswordChanged() {
         // given
-        CreatePatientCommand createPatientCommand = new CreatePatientCommand("test@gmail.com", "pass1234", "1234", "Wiktor",
-                "Test", "500500500", LocalDate.of(1999, 1, 1));
-        Patient patient = mapper.toEntity(createPatientCommand);
-        when(patientRepository.findByEmail(createPatientCommand.email())).thenReturn(Optional.of(patient));
+        String email = "test@gmail.com";
+        Patient patient = Patient.builder().email(email).password("pass1234").idCardNo("1234").firstName("Wiktor")
+                .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
+        when(patientRepository.findByEmail(email)).thenReturn(Optional.of(patient));
         ChangePasswordCommand changePasswordCommand = new ChangePasswordCommand("4321ssap");
 
         // when
-        patientService.changePassword(createPatientCommand.email(), changePasswordCommand);
+        patientService.changePassword(email, changePasswordCommand);
 
         // then
         assertThat(patient.getPassword()).isEqualTo(changePasswordCommand.password());
@@ -105,34 +114,47 @@ class PatientServiceTest {
     @Test
     void getPatientByEmail_WithExistingEmail_ReturnedPatientDto() {
         // given
-        CreatePatientCommand createPatientCommand = new CreatePatientCommand("test@gmail.com", "pass1234", "1234", "Wiktor",
-                "Test", "500500500", LocalDate.of(1999, 1, 1));
-        Patient patient = mapper.toEntity(createPatientCommand);
-        when(patientRepository.findByEmail(createPatientCommand.email())).thenReturn(Optional.of(patient));
+        String email = "test@gmail.com";
+        Patient patient = Patient.builder().email(email).password("pass1234").idCardNo("1234").firstName("Wiktor")
+                .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
+        when(patientRepository.findByEmail(email)).thenReturn(Optional.of(patient));
 
         // when
-        PatientDto patientByEmail = patientService.getPatientByEmail(createPatientCommand.email());
+        PatientDto patientByEmail = patientService.getPatientByEmail(email);
 
         // then
-        assertThat(patientByEmail).isEqualTo(mapper.toDto(patient));
+        assertAll(
+                () -> assertThat(patientByEmail.email()).isEqualTo(email),
+                () -> assertThat(patientByEmail.firstName()).isEqualTo("Wiktor"),
+                () -> assertThat(patientByEmail.lastName()).isEqualTo("Test"),
+                () -> assertThat(patientByEmail.birthday()).isEqualTo(LocalDate.of(1999, 1, 1))
+        );
+        verify(patientRepository).findByEmail(email);
     }
 
     @Test
-    void getPatients_WithExistingPatients_ReturnedPatientsDtos() {
+    void getPatients_WithExistingPatients_ReturnedPatientDtos() {
         // given
-        CreatePatientCommand createPatientCommand = new CreatePatientCommand("test@gmail.com", "pass1234", "1234", "Wiktor",
-                "Test", "500500500", LocalDate.of(1999, 1, 1));
-        Patient firstPatient = mapper.toEntity(createPatientCommand);
-        CreatePatientCommand secondCreatePatientCommand = new CreatePatientCommand("test2@gmail.com", "pass12345", "1234", "Andrzej",
-                "Test", "500500500", LocalDate.of(1999, 2, 2));
-        Patient secondPatient = mapper.toEntity(secondCreatePatientCommand);
-        when(patientRepository.findAll()).thenReturn(List.of(firstPatient, secondPatient));
+        List<Patient> patients = List.of(
+                Patient.builder().email("test@gmail.com").password("pass1234").idCardNo("1234").firstName("Wiktor")
+                        .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build(),
+                Patient.builder().email("test2@gmail.com").password("pass12345").idCardNo("5555").firstName("Andrzej")
+                        .lastName("Kowalski").phoneNumber("600600600").birthday(LocalDate.of(1988, 12, 12)).build()
+        );
+        when(patientRepository.findAll()).thenReturn(patients);
 
         // when
         List<PatientDto> result = patientService.getPatients();
 
         // then
-        assertThat(result).containsExactly(mapper.toDto(firstPatient), mapper.toDto(secondPatient));
+        assertAll(
+                () -> assertThat(result).hasSize(2),
+                () -> assertThat(result.get(0).email()).isEqualTo("test@gmail.com"),
+                () -> assertThat(result.get(0).firstName()).isEqualTo("Wiktor"),
+                () -> assertThat(result.get(1).email()).isEqualTo("test2@gmail.com"),
+                () -> assertThat(result.get(1).firstName()).isEqualTo("Andrzej")
+        );
+        verify(patientRepository).findAll();
     }
 
     @Test
@@ -152,12 +174,11 @@ class PatientServiceTest {
     @Test
     void updatePatient_WithEmailUsedByOtherPatient_ThrownPatientAlreadyExistsException() {
         // given
-        CreatePatientCommand createPatientCommand = new CreatePatientCommand("test@gmail.com", "pass1234", "1234", "Wiktor",
-                "Test", "500500500", LocalDate.of(1999, 1, 1));
-        Patient firstPatient = mapper.toEntity(createPatientCommand);
-        CreatePatientCommand secondCreatePatientCommand = new CreatePatientCommand("existing@gmail.com", "pass12345", "1234", "Andrzej",
-                "Test", "500500500", LocalDate.of(1999, 2, 2));
-        Patient secondPatient = mapper.toEntity(secondCreatePatientCommand);
+        Patient firstPatient = Patient.builder().email("test@gmail.com").password("pass1234")
+                .idCardNo("1234").firstName("Wiktor")
+                .lastName("Test").phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
+        Patient secondPatient = Patient.builder().email("existing@gmail.com").password("pass12345").idCardNo("1234").firstName("Andrzej").lastName("Test").phoneNumber("600600600").birthday(LocalDate.of(1999, 2, 2)).build();
         UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand(secondPatient.getEmail(), firstPatient.getPassword(), firstPatient.getIdCardNo(),
                 firstPatient.getFirstName(), firstPatient.getLastName(), firstPatient.getPhoneNumber(),
                 firstPatient.getBirthday());

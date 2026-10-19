@@ -44,8 +44,9 @@ class PatientControllerTest {
         // given
         PatientDto patientDto = new PatientDto("test@gmail.com", "Wiktor", "Test",
                 "500500500", LocalDate.of(1999, 1, 1));
-        when(patientService.getPatients())
-                .thenReturn(List.of(patientDto));
+        PatientDto secondPatientDto = new PatientDto("second@gmail.com", "Andrew", "Kowalski",
+                "600600600", LocalDate.of(1988, 12, 12));
+        when(patientService.getPatients()).thenReturn(List.of(patientDto, secondPatientDto));
 
         // when + then
         mvc.perform(get("/patients"))
@@ -54,7 +55,12 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$[0].firstName").value("Wiktor"))
                 .andExpect(jsonPath("$[0].lastName").value("Test"))
                 .andExpect(jsonPath("$[0].phoneNumber").value("500500500"))
-                .andExpect(jsonPath("$[0].birthday").value("1999-01-01"));
+                .andExpect(jsonPath("$[0].birthday").value("1999-01-01"))
+                .andExpect(jsonPath("$[1].email").value("second@gmail.com"))
+                .andExpect(jsonPath("$[1].firstName").value("Andrew"))
+                .andExpect(jsonPath("$[1].lastName").value("Kowalski"))
+                .andExpect(jsonPath("$[1].phoneNumber").value("600600600"))
+                .andExpect(jsonPath("$[1].birthday").value("1988-12-12"));
     }
 
     @Test
@@ -138,8 +144,6 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$.lastName").value("Test"))
                 .andExpect(jsonPath("$.phoneNumber").value("500500500"))
                 .andExpect(jsonPath("$.birthday").value("1999-01-01"));
-
-
         ArgumentCaptor<ChangePasswordCommand> captor =
                 ArgumentCaptor.forClass(ChangePasswordCommand.class);
         verify(patientService).changePassword(eq(email), captor.capture());
@@ -153,7 +157,6 @@ class PatientControllerTest {
         // when + then
         mvc.perform(delete("/patients/{email}", email))
                 .andExpect(status().isNoContent());
-
         verify(patientService).removePatientByEmail(email);
     }
 
@@ -181,7 +184,10 @@ class PatientControllerTest {
         mvc.perform(post("/patients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(command)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Patient with email takenEmail@gmail.com already exists"))
+                .andExpect(jsonPath("$.httpCode").value(409))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
@@ -197,7 +203,10 @@ class PatientControllerTest {
         mvc.perform(put("/patients/{email}", email)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(updatePatientCommand)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Patient with email notExistingEmail@gmail.com not found"))
+                .andExpect(jsonPath("$.httpCode").value(404))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
@@ -234,7 +243,7 @@ class PatientControllerTest {
     @Test
     void removePatient_WithNotExistingEmail_AnsweredWithNotFoundStatus() throws Exception {
         // given
-        String notExistingEmail = "notExistin@gmail.com";
+        String notExistingEmail = "notExisting@gmail.com";
         doThrow(new PatientNotFoundException(notExistingEmail)).when(patientService).removePatientByEmail(notExistingEmail);
 
         // when
