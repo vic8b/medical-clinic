@@ -20,6 +20,7 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
+    @Column(unique = true)
     private String email;
     private String password;
     private String idCardNo;
