@@ -1,23 +1,25 @@
 package com.vic8b.medicalclinic.model;
 
 import com.vic8b.medicalclinic.exception.PatientInvalidDataException;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+@Entity
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Patient {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
             + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$");
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    private final UUID id;
+    private UUID id;
     private String email;
     private String password;
     private String idCardNo;
@@ -30,7 +32,6 @@ public class Patient {
     public Patient(@NonNull String email, @NonNull String password, @NonNull String idCardNo, @NonNull String firstName,
                    @NonNull String lastName, @NonNull String phoneNumber, @NonNull LocalDate birthday) {
         validatePatientData(email, password, idCardNo, firstName, lastName, phoneNumber, birthday);
-        this.id = UUID.randomUUID();
         this.email = email;
         this.password = password;
         this.idCardNo = idCardNo;
