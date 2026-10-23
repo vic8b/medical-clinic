@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Entity
+@Table(name = "PATIENTS")
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
