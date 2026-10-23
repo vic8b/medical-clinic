@@ -57,19 +57,22 @@ class PatientServiceTest {
                 () -> assertThat(patientDto.phoneNumber()).isEqualTo("500500500"),
                 () -> assertThat(patientDto.birthday()).isEqualTo(LocalDate.of(1999, 1, 1))
         );
-        verify(patientRepository).add(any(Patient.class));
+        verify(patientRepository).save(any(Patient.class));
     }
 
     @Test
     void removePatientByEmail_WithCorrectEmail_RepositoryRemoveInvoked() {
         // given
         String email = "test@gmail.com";
+        Patient patient = Patient.builder().email(email).password("pass1234").idCardNo("1234").firstName("Wiktor")
+                .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
+        when(patientRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(patient));
 
         // when
         patientService.removePatientByEmail(email);
 
         // then
-        verify(patientRepository).removeByEmail(email);
+        verify(patientRepository).delete(any(Patient.class));
     }
 
     @Test
@@ -78,10 +81,10 @@ class PatientServiceTest {
         String searchedEmail = "test@gmail.com";
         Patient patient = Patient.builder().email(searchedEmail).password("pass1234").idCardNo("1234").firstName("Wiktor")
                 .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
-        when(patientRepository.findByEmail(searchedEmail)).thenReturn(Optional.of(patient));
+        when(patientRepository.findByEmailIgnoreCase(searchedEmail)).thenReturn(Optional.of(patient));
         UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("test123@gmail.com", "pass1234", "1234", "Andrzej",
                 "Kowalski", "500500500", LocalDate.of(1999, 1, 1));
-        when(patientRepository.findByEmail(updatePatientCommand.email())).thenReturn(Optional.empty());
+        when(patientRepository.findByEmailIgnoreCase(updatePatientCommand.email())).thenReturn(Optional.empty());
 
         // when
         PatientDto result = patientService.updatePatient(searchedEmail, updatePatientCommand);
@@ -101,7 +104,7 @@ class PatientServiceTest {
         String email = "test@gmail.com";
         Patient patient = Patient.builder().email(email).password("pass1234").idCardNo("1234").firstName("Wiktor")
                 .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
-        when(patientRepository.findByEmail(email)).thenReturn(Optional.of(patient));
+        when(patientRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(patient));
         ChangePasswordCommand changePasswordCommand = new ChangePasswordCommand("4321ssap");
 
         // when
@@ -117,7 +120,7 @@ class PatientServiceTest {
         String email = "test@gmail.com";
         Patient patient = Patient.builder().email(email).password("pass1234").idCardNo("1234").firstName("Wiktor")
                 .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
-        when(patientRepository.findByEmail(email)).thenReturn(Optional.of(patient));
+        when(patientRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(patient));
 
         // when
         PatientDto patientByEmail = patientService.getPatientByEmail(email);
@@ -129,7 +132,7 @@ class PatientServiceTest {
                 () -> assertThat(patientByEmail.lastName()).isEqualTo("Test"),
                 () -> assertThat(patientByEmail.birthday()).isEqualTo(LocalDate.of(1999, 1, 1))
         );
-        verify(patientRepository).findByEmail(email);
+        verify(patientRepository).findByEmailIgnoreCase(email);
     }
 
     @Test
@@ -163,7 +166,7 @@ class PatientServiceTest {
         String notExistingEmail = "test@gmail.com";
         UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("test123@gmail.com", "pass1234", "1234", "Andrzej",
                 "Kowalski", "500500500", LocalDate.of(1999, 1, 1));
-        when(patientRepository.findByEmail(notExistingEmail)).thenReturn(Optional.empty());
+        when(patientRepository.findByEmailIgnoreCase(notExistingEmail)).thenReturn(Optional.empty());
 
         // when + then
         assertThatThrownBy(() -> patientService.updatePatient(notExistingEmail, updatePatientCommand))
@@ -182,8 +185,8 @@ class PatientServiceTest {
         UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand(secondPatient.getEmail(), firstPatient.getPassword(), firstPatient.getIdCardNo(),
                 firstPatient.getFirstName(), firstPatient.getLastName(), firstPatient.getPhoneNumber(),
                 firstPatient.getBirthday());
-        when(patientRepository.findByEmail(firstPatient.getEmail())).thenReturn(Optional.of(firstPatient));
-        when(patientRepository.findByEmail(secondPatient.getEmail())).thenReturn(Optional.of(secondPatient));
+        when(patientRepository.findByEmailIgnoreCase(firstPatient.getEmail())).thenReturn(Optional.of(firstPatient));
+        when(patientRepository.findByEmailIgnoreCase(secondPatient.getEmail())).thenReturn(Optional.of(secondPatient));
 
         // when + then
         assertThatThrownBy(() -> patientService.updatePatient(firstPatient.getEmail(), updatePatientCommand))
@@ -196,7 +199,7 @@ class PatientServiceTest {
         // given
         String notExistingEmail = "test@gmail.com";
         ChangePasswordCommand changePasswordCommand = new ChangePasswordCommand("test");
-        when(patientRepository.findByEmail(notExistingEmail)).thenReturn(Optional.empty());
+        when(patientRepository.findByEmailIgnoreCase(notExistingEmail)).thenReturn(Optional.empty());
 
         // when + then
         assertThatThrownBy(() -> patientService.changePassword(notExistingEmail, changePasswordCommand))
@@ -208,7 +211,7 @@ class PatientServiceTest {
     void getPatientByEmail_WithNotExistingEmail_ThrownPatientNotFoundException() {
         // given
         String notExistingEmail = "test@gmail.com";
-        when(patientRepository.findByEmail(notExistingEmail)).thenReturn(Optional.empty());
+        when(patientRepository.findByEmailIgnoreCase(notExistingEmail)).thenReturn(Optional.empty());
 
         // when + then
         assertThatThrownBy(() -> patientService.getPatientByEmail(notExistingEmail))

@@ -2,16 +2,11 @@ package com.vic8b.medicalclinic.repository;
 
 import com.vic8b.medicalclinic.model.Patient;
 import lombok.NonNull;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface PatientRepository {
-    Patient add(@NonNull Patient patient);
-
-    void removeByEmail(@NonNull String email);
-
-    Optional<Patient> findByEmail(@NonNull String email);
-
-    List<Patient> findAll();
+public interface PatientRepository extends JpaRepository<Patient, UUID> {
+    Optional<Patient> findByEmailIgnoreCase(@NonNull String email);
 }
