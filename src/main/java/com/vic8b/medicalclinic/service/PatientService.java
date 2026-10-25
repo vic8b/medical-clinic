@@ -61,24 +61,22 @@ public class PatientService {
                 .toList();
     }
 
-    private void validateEmailAvailability(@NonNull CreatePatientCommand command) {
-        patientRepository.findByEmailIgnoreCase(command.email())
-                .ifPresent(patient -> {
-                    throw new PatientAlreadyExistsException(patient.getEmail());
-                });
+    private void validateEmailAvailability(CreatePatientCommand command) {
+        if (patientRepository.existsByEmailIgnoreCase(command.email())) {
+            throw new PatientAlreadyExistsException(command.email());
+        }
     }
 
     private void validateUpdateEmailAvailability(UpdatePatientCommand command, Patient patient) {
         if (patient.getEmail().equalsIgnoreCase(command.email())) {
             return;
         }
-        patientRepository.findByEmailIgnoreCase(command.email())
-                .ifPresent(existingPatient -> {
-                    throw new PatientAlreadyExistsException(command.email());
-                });
+        if (patientRepository.existsByEmailIgnoreCase(command.email())) {
+            throw new PatientAlreadyExistsException(command.email());
+        }
     }
 
-    private Patient findPatientByEmailOrThrow(@NonNull String email) {
+    private Patient findPatientByEmailOrThrow(String email) {
         return patientRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new PatientNotFoundException(email));
     }
