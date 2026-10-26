@@ -25,6 +25,7 @@ public class PatientService {
 
     public PatientDto addPatient(@NonNull CreatePatientCommand command) {
         validateEmailAvailability(command);
+        validateIdCardNoAvailability(command);
         Patient patient = patientMapper.toEntity(command);
         patientRepository.save(patient);
         return patientMapper.toDto(patient);
@@ -38,7 +39,7 @@ public class PatientService {
     public PatientDto updatePatient(@NonNull String currentEmail, @NonNull UpdatePatientCommand command) {
         Patient patient = findPatientByEmailOrThrow(currentEmail);
         validateUpdateEmailAvailability(command, patient);
-        patient.update(command.email(), command.password(), command.idCardNo(), command.firstName(), command.lastName(),
+        patient.update(command.email(), command.password(), command.firstName(), command.lastName(),
                 command.phoneNumber(), command.birthday());
         patientRepository.save(patient);
         return patientMapper.toDto(patient);
@@ -63,7 +64,13 @@ public class PatientService {
 
     private void validateEmailAvailability(CreatePatientCommand command) {
         if (patientRepository.existsByEmailIgnoreCase(command.email())) {
-            throw new PatientAlreadyExistsException(command.email());
+            throw PatientAlreadyExistsException.byEmail(command.email());
+        }
+    }
+
+    private void validateIdCardNoAvailability(CreatePatientCommand command) {
+        if (patientRepository.existsByIdCardNo(command.idCardNo())) {
+            throw PatientAlreadyExistsException.byCardIdNo(command.idCardNo());
         }
     }
 
@@ -72,7 +79,7 @@ public class PatientService {
             return;
         }
         if (patientRepository.existsByEmailIgnoreCase(command.email())) {
-            throw new PatientAlreadyExistsException(command.email());
+            throw PatientAlreadyExistsException.byEmail(command.email());
         }
     }
 

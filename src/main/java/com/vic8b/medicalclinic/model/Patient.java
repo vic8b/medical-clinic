@@ -24,6 +24,7 @@ public class Patient {
     @Column(unique = true)
     private String email;
     private String password;
+    @Column(unique = true)
     private String idCardNo;
     private String firstName;
     private String lastName;
@@ -43,12 +44,11 @@ public class Patient {
         this.birthday = birthday;
     }
 
-    public void update(@NonNull String email, @NonNull String password, @NonNull String idCardNo, @NonNull String firstName,
+    public void update(@NonNull String email, @NonNull String password, @NonNull String firstName,
                        @NonNull String lastName, @NonNull String phoneNumber, @NonNull LocalDate birthday) {
-        validatePatientData(email, password, idCardNo, firstName, lastName, phoneNumber, birthday);
+        validatePatientData(email, password, this.idCardNo, firstName, lastName, phoneNumber, birthday);
         this.email = email;
         this.password = password;
-        this.idCardNo = idCardNo;
         this.firstName = firstName;
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;

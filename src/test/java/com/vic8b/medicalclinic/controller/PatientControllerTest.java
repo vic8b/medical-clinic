@@ -107,7 +107,7 @@ class PatientControllerTest {
         // given
         String email = "test@gmail.com";
         UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("updatedTest@gmail.com",
-                "newPassword", "4321", "Andrew", "Kowalski", "600600600",
+                "newPassword", "Andrew", "Kowalski", "600600600",
                 LocalDate.of(1900, 12, 12));
         PatientDto updatedPatientDto = new PatientDto(updatePatientCommand.email(), updatePatientCommand.firstName(),
                 updatePatientCommand.lastName(), updatePatientCommand.phoneNumber(), updatePatientCommand.birthday());
@@ -178,7 +178,7 @@ class PatientControllerTest {
         CreatePatientCommand command = new CreatePatientCommand(takenEmail, "1234",
                 "1234", "Wiktor", "Test", "500500500",
                 LocalDate.of(1999, 1, 1));
-        when(patientService.addPatient(command)).thenThrow(new PatientAlreadyExistsException(takenEmail));
+        when(patientService.addPatient(command)).thenThrow(PatientAlreadyExistsException.byEmail(takenEmail));
 
         // when + then
         mvc.perform(post("/patients")
@@ -195,7 +195,7 @@ class PatientControllerTest {
         // given
         String email = "notExistingEmail@gmail.com";
         UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("updatedTest@gmail.com",
-                "newPassword", "4321", "Andrew", "Kowalski", "600600600",
+                "newPassword", "Andrew", "Kowalski", "600600600",
                 LocalDate.of(1900, 12, 12));
         when(patientService.updatePatient(email, updatePatientCommand)).thenThrow(new PatientNotFoundException(email));
 
@@ -215,9 +215,9 @@ class PatientControllerTest {
         String email = "test@gmail.com";
         String takenEmail = "takenEmail@gmail.com";
         UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand(takenEmail,
-                "newPassword", "4321", "Andrew", "Kowalski", "600600600",
+                "newPassword", "Andrew", "Kowalski", "600600600",
                 LocalDate.of(1900, 12, 12));
-        when(patientService.updatePatient(email, updatePatientCommand)).thenThrow(new PatientAlreadyExistsException(takenEmail));
+        when(patientService.updatePatient(email, updatePatientCommand)).thenThrow(PatientAlreadyExistsException.byEmail(takenEmail));
 
         // when + then
         mvc.perform(put("/patients/{email}", email)
