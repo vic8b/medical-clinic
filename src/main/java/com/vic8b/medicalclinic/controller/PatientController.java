@@ -5,6 +5,7 @@ import com.vic8b.medicalclinic.command.CreatePatientCommand;
 import com.vic8b.medicalclinic.command.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.PatientDto;
 import com.vic8b.medicalclinic.service.PatientService;
+import jakarta.validation.Valid;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,17 +32,17 @@ public class PatientController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PatientDto addPatient(@RequestBody CreatePatientCommand command) {
+    public PatientDto addPatient(@Valid @RequestBody CreatePatientCommand command) {
         return patientService.addPatient(command);
     }
 
     @PutMapping("/{email}")
-    public PatientDto updatePatient(@PathVariable String email, @RequestBody UpdatePatientCommand command) {
+    public PatientDto updatePatient(@PathVariable String email, @Valid @RequestBody UpdatePatientCommand command) {
         return patientService.updatePatient(email, command);
     }
 
     @PatchMapping("/{email}/password")
-    public PatientDto changePassword(@PathVariable String email, @RequestBody ChangePasswordCommand command) {
+    public PatientDto changePassword(@PathVariable String email, @Valid @RequestBody ChangePasswordCommand command) {
         return patientService.changePassword(email, command);
     }
 

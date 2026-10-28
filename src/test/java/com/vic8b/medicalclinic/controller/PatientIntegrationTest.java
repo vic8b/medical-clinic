@@ -60,7 +60,7 @@ class PatientIntegrationTest {
     }
 
     @Test
-    void addPatient_WithNullValue_AnsweredWithStatusInternalServerError() throws Exception {
+    void addPatient_WithNullValue_AnsweredWithBadRequest() throws Exception {
         // given
         String addRequestWithNullField = """
                 {
@@ -78,7 +78,7 @@ class PatientIntegrationTest {
         mvc.perform(post("/patients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(addRequestWithNullField))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
         assertThat(patientRepository.findAll()).isEmpty();
     }
 
@@ -112,6 +112,40 @@ class PatientIntegrationTest {
                 () -> assertThat(updatedPatient.getFirstName()).isEqualTo("Andrew"),
                 () -> assertThat(updatedPatient.getLastName()).isEqualTo("Kowalski"),
                 () -> assertThat(updatedPatient.getPhoneNumber()).isEqualTo("999999999")
+        );
+    }
+
+    @Test
+    void updatePatient_WithNullValue_AnsweredWithBadRequestAndPatientNotChanged() throws Exception {
+        // given
+        Patient patient = Patient.builder().email("test@gmail.com").password("pass1234").idCardNo("ABC123456")
+                .firstName("Wiktor").lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
+        patientRepository.save(patient);
+        String updateRequest = """
+                {
+                    "email": null,
+                    "password": "updatedPass",
+                    "idCardNo": "shouldNotBeAffected",
+                    "firstName": "Andrew",
+                    "lastName": "Kowalski",
+                    "phoneNumber": "999999999",
+                    "birthday": "1900-01-01"
+                }
+                """;
+
+        // when + then
+        mvc.perform(put("/patients/{email}", patient.getEmail())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequest))
+                .andExpect(status().isBadRequest());
+        Patient unchangedPatient = patientRepository.findByEmailIgnoreCase("test@gmail.com").orElseThrow();
+        assertAll(
+                () -> assertThat(unchangedPatient.getEmail()).isEqualTo("test@gmail.com"),
+                () -> assertThat(unchangedPatient.getPassword()).isEqualTo("pass1234"),
+                () -> assertThat(unchangedPatient.getFirstName()).isEqualTo("Wiktor"),
+                () -> assertThat(unchangedPatient.getLastName()).isEqualTo("Test"),
+                () -> assertThat(unchangedPatient.getPhoneNumber()).isEqualTo("500500500"),
+                () -> assertThat(unchangedPatient.getBirthday()).isEqualTo(LocalDate.of(1999, 1, 1))
         );
     }
 }

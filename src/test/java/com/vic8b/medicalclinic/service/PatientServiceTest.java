@@ -9,7 +9,6 @@ import com.vic8b.medicalclinic.exception.PatientNotFoundException;
 import com.vic8b.medicalclinic.mapper.PatientMapper;
 import com.vic8b.medicalclinic.model.Patient;
 import com.vic8b.medicalclinic.repository.PatientRepository;
-import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -206,44 +205,6 @@ class PatientServiceTest {
         assertThatThrownBy(() -> patientService.updatePatient(firstPatient.getEmail(), updatePatientCommand))
                 .isInstanceOf(PatientAlreadyExistsException.class)
                 .hasMessage("Patient with email existing@gmail.com already exists");
-    }
-
-    @Test
-    void updatePatient_withNullFields_ThrownNPE() {
-        // given
-        ThrowableAssert.ThrowingCallable emailIsNull = () -> new UpdatePatientCommand(null, "1234",
-                "Wiktor", "Test", "500500500", LocalDate.of(1999, 1, 1));
-        ThrowableAssert.ThrowingCallable passwordIsNull = () -> new UpdatePatientCommand("test@gmail.com", null,
-                "Wiktor", "Test", "500500500", LocalDate.of(1999, 1, 1));
-        ThrowableAssert.ThrowingCallable firstNameIsNull = () -> new UpdatePatientCommand("test@gmail.com", "1234",
-                null, "Test", "500500500", LocalDate.of(1999, 1, 1));
-        ThrowableAssert.ThrowingCallable lastNameIsNull = () -> new UpdatePatientCommand("test@gmail.com", "1234",
-                "Wiktor", null, "500500500", LocalDate.of(1999, 1, 1));
-        ThrowableAssert.ThrowingCallable phoneNumberIsNull = () -> new UpdatePatientCommand("test@gmail.com", "12345",
-                "Wiktor", "Test", null, LocalDate.of(1999, 1, 1));
-        ThrowableAssert.ThrowingCallable birthdayIsNull = () -> new UpdatePatientCommand("test@gmail.com", "12345",
-                "Wiktor", "Test", "500500500", null);
-        // when + then
-        assertAll(
-                () -> assertThatThrownBy(emailIsNull)
-                        .isInstanceOf(NullPointerException.class)
-                        .hasMessage("email is marked non-null but is null"),
-                () -> assertThatThrownBy(passwordIsNull)
-                        .isInstanceOf(NullPointerException.class)
-                        .hasMessage("password is marked non-null but is null"),
-                () -> assertThatThrownBy(firstNameIsNull)
-                        .isInstanceOf(NullPointerException.class)
-                        .hasMessage("firstName is marked non-null but is null"),
-                () -> assertThatThrownBy(lastNameIsNull)
-                        .isInstanceOf(NullPointerException.class)
-                        .hasMessage("lastName is marked non-null but is null"),
-                () -> assertThatThrownBy(phoneNumberIsNull)
-                        .isInstanceOf(NullPointerException.class)
-                        .hasMessage("phoneNumber is marked non-null but is null"),
-                () -> assertThatThrownBy(birthdayIsNull)
-                        .isInstanceOf(NullPointerException.class)
-                        .hasMessage("birthday is marked non-null but is null")
-        );
     }
 
     @Test
