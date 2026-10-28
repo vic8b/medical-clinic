@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Entity
 @Table(name = "PATIENTS")
@@ -14,9 +13,9 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Patient {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
-    private UUID id;
+    private Long id;
     @Column(unique = true, nullable = false)
     private String email;
     @Column(nullable = false)
@@ -31,6 +30,8 @@ public class Patient {
     private String phoneNumber;
     @Column(nullable = false)
     private LocalDate birthday;
+    @OneToOne(mappedBy = "patient")
+    private User user;
 
     @Builder
     public Patient(@NonNull String email, @NonNull String password, @NonNull String idCardNo, @NonNull String firstName,
@@ -59,5 +60,9 @@ public class Patient {
             throw new PatientInvalidDataException("Password cannot be blank");
         }
         this.password = newPassword;
+    }
+
+    public void assignUser(@NonNull User user) {
+        this.user = user;
     }
 }

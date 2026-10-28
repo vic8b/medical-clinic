@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 import java.util.UUID;
 
 public class PatientAlreadyExistsException extends MedicalClinicException {
-    public PatientAlreadyExistsException(UUID id) {
+    public PatientAlreadyExistsException(Long id) {
         super("Patient with id " + id + " already exists", HttpStatus.CONFLICT);
     }
 

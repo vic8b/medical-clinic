@@ -18,9 +18,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PatientService {
-    @NonNull
     private final PatientRepository patientRepository;
-    @NonNull
     private final PatientMapper patientMapper;
 
     public PatientDto addPatient(@NonNull CreatePatientCommand command) {
