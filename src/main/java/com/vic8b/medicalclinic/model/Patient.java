@@ -1,6 +1,5 @@
 package com.vic8b.medicalclinic.model;
 
-import com.vic8b.medicalclinic.exception.PatientInvalidDataException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,15 +16,7 @@ public class Patient {
     @EqualsAndHashCode.Include
     private Long id;
     @Column(unique = true, nullable = false)
-    private String email;
-    @Column(nullable = false)
-    private String password;
-    @Column(unique = true, nullable = false)
     private String idCardNo;
-    @Column(nullable = false)
-    private String firstName;
-    @Column(nullable = false)
-    private String lastName;
     @Column(nullable = false)
     private String phoneNumber;
     @Column(nullable = false)
@@ -34,35 +25,22 @@ public class Patient {
     private User user;
 
     @Builder
-    public Patient(@NonNull String email, @NonNull String password, @NonNull String idCardNo, @NonNull String firstName,
-                   @NonNull String lastName, @NonNull String phoneNumber, @NonNull LocalDate birthday) {
-        this.email = email;
-        this.password = password;
+    public Patient(@NonNull String idCardNo, @NonNull String phoneNumber, @NonNull LocalDate birthday) {
         this.idCardNo = idCardNo;
-        this.firstName = firstName;
-        this.lastName = lastName;
         this.phoneNumber = phoneNumber;
         this.birthday = birthday;
     }
 
-    public void update(@NonNull String email, @NonNull String password, @NonNull String firstName,
-                       @NonNull String lastName, @NonNull String phoneNumber, @NonNull LocalDate birthday) {
-        this.email = email;
-        this.password = password;
-        this.firstName = firstName;
-        this.lastName = lastName;
+    public void update(@NonNull String phoneNumber, @NonNull LocalDate birthday) {
         this.phoneNumber = phoneNumber;
         this.birthday = birthday;
-    }
-
-    public void changePassword(@NonNull String newPassword) {
-        if (newPassword.isBlank()) {
-            throw new PatientInvalidDataException("Password cannot be blank");
-        }
-        this.password = newPassword;
     }
 
     public void assignUser(@NonNull User user) {
         this.user = user;
+    }
+
+    public void removeUser() {
+        this.user = null;
     }
 }

@@ -1,14 +1,13 @@
 package com.vic8b.medicalclinic.controller;
 
-import com.vic8b.medicalclinic.command.ChangePasswordCommand;
 import com.vic8b.medicalclinic.command.CreatePatientCommand;
+import com.vic8b.medicalclinic.command.CreateUserCommand;
 import com.vic8b.medicalclinic.command.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.PatientDto;
-import com.vic8b.medicalclinic.exception.PatientAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.PatientNotFoundException;
+import com.vic8b.medicalclinic.exception.UserAlreadyHasPatientException;
 import com.vic8b.medicalclinic.service.PatientService;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -20,8 +19,6 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -84,16 +81,15 @@ class PatientControllerTest {
     @Test
     void addPatient_WithCorrectPatientCommand_AnsweredWithAddedPatient() throws Exception {
         // given
-        CreatePatientCommand command = new CreatePatientCommand("test@gmail.com", "1234",
-                "1234", "Wiktor", "Test", "500500500",
-                LocalDate.of(1999, 1, 1));
-        PatientDto patientDto = new PatientDto(command.email(), command.firstName(), command.lastName(), command.phoneNumber(), command.birthday());
-        when(patientService.addPatient(command)).thenReturn(patientDto);
+        CreateUserCommand createUserCommand = new CreateUserCommand("username", "test@gmail.com", "pass1234", "Wiktor", "Test");
+        CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, "1234", "500500500", LocalDate.of(1999, 1, 1));
+        PatientDto patientDto = new PatientDto(createUserCommand.email(), createUserCommand.firstName(), createUserCommand.lastName(), createPatientCommand.phoneNumber(), createPatientCommand.birthday());
+        when(patientService.addPatient(createPatientCommand)).thenReturn(patientDto);
 
         // when + then
         mvc.perform(post("/patients")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(command)))
+                        .content(mapper.writeValueAsString(createPatientCommand)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("test@gmail.com"))
                 .andExpect(jsonPath("$.firstName").value("Wiktor"))
@@ -106,11 +102,10 @@ class PatientControllerTest {
     void updatePatient_WithCorrectEmailAndCorrectUpdatePatientCommand_AnsweredWithUpdatedPatient() throws Exception {
         // given
         String email = "test@gmail.com";
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("updatedTest@gmail.com",
-                "newPassword", "Andrew", "Kowalski", "600600600",
+        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("600600600",
                 LocalDate.of(1900, 12, 12));
-        PatientDto updatedPatientDto = new PatientDto(updatePatientCommand.email(), updatePatientCommand.firstName(),
-                updatePatientCommand.lastName(), updatePatientCommand.phoneNumber(), updatePatientCommand.birthday());
+        PatientDto updatedPatientDto = new PatientDto("test@gmail.com", "Wiktor",
+                "Test", updatePatientCommand.phoneNumber(), updatePatientCommand.birthday());
         when(patientService.updatePatient(email, updatePatientCommand)).thenReturn(updatedPatientDto);
 
         // when + then
@@ -118,36 +113,8 @@ class PatientControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(updatePatientCommand)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("updatedTest@gmail.com"))
-                .andExpect(jsonPath("$.firstName").value("Andrew"))
-                .andExpect(jsonPath("$.lastName").value("Kowalski"))
                 .andExpect(jsonPath("$.phoneNumber").value("600600600"))
                 .andExpect(jsonPath("$.birthday").value("1900-12-12"));
-    }
-
-    @Test
-    void changePassword_WithCorrectEmailAndCorrectChangePasswordCommand_AnsweredWithUpdatedPatient() throws Exception {
-        // given
-        String email = "test@gmail.com";
-        ChangePasswordCommand changePasswordCommand = new ChangePasswordCommand("newPassword");
-        PatientDto patientDto = new PatientDto("test@gmail.com", "Wiktor", "Test",
-                "500500500", LocalDate.of(1999, 1, 1));
-        when(patientService.changePassword(email, changePasswordCommand)).thenReturn(patientDto);
-
-        // when + then
-        mvc.perform(patch("/patients/{email}/password", email)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(changePasswordCommand)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("test@gmail.com"))
-                .andExpect(jsonPath("$.firstName").value("Wiktor"))
-                .andExpect(jsonPath("$.lastName").value("Test"))
-                .andExpect(jsonPath("$.phoneNumber").value("500500500"))
-                .andExpect(jsonPath("$.birthday").value("1999-01-01"));
-        ArgumentCaptor<ChangePasswordCommand> captor =
-                ArgumentCaptor.forClass(ChangePasswordCommand.class);
-        verify(patientService).changePassword(eq(email), captor.capture());
-        assertThat(captor.getValue().password()).isEqualTo(changePasswordCommand.password());
     }
 
     @Test
@@ -172,20 +139,19 @@ class PatientControllerTest {
     }
 
     @Test
-    void addPatient_WithTakenEmail_AnsweredWithConflictStatus() throws Exception {
+    void addPatient_WhenUserAlreadyHasPatient_AnsweredWithConflictStatus() throws Exception {
         // given
         String takenEmail = "takenEmail@gmail.com";
-        CreatePatientCommand command = new CreatePatientCommand(takenEmail, "1234",
-                "1234", "Wiktor", "Test", "500500500",
-                LocalDate.of(1999, 1, 1));
-        when(patientService.addPatient(command)).thenThrow(PatientAlreadyExistsException.byEmail(takenEmail));
+        CreateUserCommand createUserCommand = new CreateUserCommand("username", takenEmail, "pass1234", "Wiktor", "Test");
+        CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, "1234", "500500500", LocalDate.of(1999, 1, 1));
+        when(patientService.addPatient(createPatientCommand)).thenThrow(new UserAlreadyHasPatientException(1L));
 
         // when + then
         mvc.perform(post("/patients")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(command)))
+                        .content(mapper.writeValueAsString(createPatientCommand)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Patient with email takenEmail@gmail.com already exists"))
+                .andExpect(jsonPath("$.message").value("User with id 1 already has an assigned patient"))
                 .andExpect(jsonPath("$.httpCode").value(409))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
@@ -194,8 +160,7 @@ class PatientControllerTest {
     void updatePatient_WithNotExistingPatientEmail_AnsweredWithNotFoundStatus() throws Exception {
         // given
         String email = "notExistingEmail@gmail.com";
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("updatedTest@gmail.com",
-                "newPassword", "Andrew", "Kowalski", "600600600",
+        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("600600600",
                 LocalDate.of(1900, 12, 12));
         when(patientService.updatePatient(email, updatePatientCommand)).thenThrow(new PatientNotFoundException(email));
 
@@ -207,37 +172,6 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$.message").value("Patient with email notExistingEmail@gmail.com not found"))
                 .andExpect(jsonPath("$.httpCode").value(404))
                 .andExpect(jsonPath("$.timestamp").exists());
-    }
-
-    @Test
-    void updatePatient_WithTakenNewEmail_AnsweredWithConflictStatus() throws Exception {
-        // given
-        String email = "test@gmail.com";
-        String takenEmail = "takenEmail@gmail.com";
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand(takenEmail,
-                "newPassword", "Andrew", "Kowalski", "600600600",
-                LocalDate.of(1900, 12, 12));
-        when(patientService.updatePatient(email, updatePatientCommand)).thenThrow(PatientAlreadyExistsException.byEmail(takenEmail));
-
-        // when + then
-        mvc.perform(put("/patients/{email}", email)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(updatePatientCommand)))
-                .andExpect(status().isConflict());
-    }
-
-    @Test
-    void changePassword_WithNotExistingEmailAndCorrectChangePasswordCommand_AnsweredWithNotFoundStatus() throws Exception {
-        // given
-        String email = "notExistingEmail@gmail.com";
-        ChangePasswordCommand changePasswordCommand = new ChangePasswordCommand("newPassword");
-        when(patientService.changePassword(email, changePasswordCommand)).thenThrow(new PatientNotFoundException(email));
-
-        // when + then
-        mvc.perform(patch("/patients/{email}/password", email)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(changePasswordCommand)))
-                .andExpect(status().isNotFound());
     }
 
     @Test

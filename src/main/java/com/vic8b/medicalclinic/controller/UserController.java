@@ -1,5 +1,6 @@
 package com.vic8b.medicalclinic.controller;
 
+import com.vic8b.medicalclinic.command.ChangePasswordCommand;
 import com.vic8b.medicalclinic.command.CreateUserCommand;
 import com.vic8b.medicalclinic.dto.UserDto;
 import com.vic8b.medicalclinic.service.UserService;
@@ -32,9 +33,14 @@ public class UserController {
         return userService.addUser(command);
     }
 
-    @PutMapping("/{userId}/patient/{patientEmail}")
-    public UserDto assignPatient(@PathVariable Long userId, @PathVariable String patientEmail) {
-        return userService.assignPatient(userId, patientEmail);
+    @PutMapping("/{userId}/patient/{patientId}")
+    public UserDto assignPatient(@PathVariable Long userId, @PathVariable Long patientId) {
+        return userService.assignPatient(userId, patientId);
+    }
+
+    @PatchMapping("/{id}/password")
+    public UserDto changePassword(@PathVariable Long id, @Valid @RequestBody ChangePasswordCommand command) {
+        return userService.changePassword(id, command);
     }
 
     @DeleteMapping("/{id}")

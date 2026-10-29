@@ -1,7 +1,9 @@
 package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.model.Patient;
+import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.PatientRepository;
+import com.vic8b.medicalclinic.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,27 +29,34 @@ class PatientIntegrationTest {
     @Autowired
     PatientRepository patientRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
     @BeforeEach
     void setup() {
-        patientRepository.deleteAll();
+        userRepository.deleteAllInBatch();
+        patientRepository.deleteAllInBatch();
     }
 
     @Test
     void addPatient_WithExistingIdCardNo_AnsweredWithStatusConflict() throws Exception {
         // given
         String existingIdCardNo = "ABC123456";
-        Patient patient = Patient.builder().email("test@gmail.com").password("pass1234").idCardNo(existingIdCardNo)
-                .firstName("Wiktor").lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
+        Patient patient = Patient.builder().idCardNo(existingIdCardNo).phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
         patientRepository.save(patient);
         String addRequest = """
                 {
-                    "email": "addedPatient@gmail.com",
-                    "password": "pass0000",
+                    "userCommand": {
+                        "username": "username",
+                        "email": "test@gmail.com",
+                        "password": "pass1234",
+                        "firstName": "Wiktor",
+                        "lastName": "Test"
+                      },
                     "idCardNo": "ABC123456",
-                    "firstName": "Andrew",
-                    "lastName": "Kowalski",
-                    "phoneNumber": "999999999",
-                    "birthday": "1900-01-01"
+                    "phoneNumber": "500500500",
+                    "birthday": "1999-01-01"
                 }
                 """;
 
@@ -64,13 +73,16 @@ class PatientIntegrationTest {
         // given
         String addRequestWithNullField = """
                 {
-                    "email": null,
-                    "password": "pass0000",
-                    "idCardNo": "ABC123456",
-                    "firstName": "Andrew",
-                    "lastName": "Kowalski",
-                    "phoneNumber": "999999999",
-                    "birthday": "1900-01-01"
+                    "userCommand": {
+                        "username": "username",
+                        "email": "test@gmail.com",
+                        "password": "pass1234",
+                        "firstName": "Wiktor",
+                        "lastName": "Test"
+                      },
+                    "idCardNo": null,
+                    "phoneNumber": "500500500",
+                    "birthday": "1999-01-01"
                 }
                 """;
 
@@ -86,64 +98,57 @@ class PatientIntegrationTest {
     void updatePatient_WithChangedIdCardNo_AnsweredOkAndIdCardNotChanged() throws Exception {
         // given
         String originalIdCardNo = "ABC123456";
-        Patient patient = Patient.builder().email("test@gmail.com").password("pass1234").idCardNo(originalIdCardNo)
-                .firstName("Wiktor").lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
+        Patient patient = Patient.builder().idCardNo(originalIdCardNo).phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
         patientRepository.save(patient);
+        User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
+                .lastName("Test").build();
+        user.assignPatient(patient);
+        userRepository.save(user);
         String updateRequest = """
                 {
-                    "email": "updatedEmail@gmail.com",
-                    "password": "updatedPass",
-                    "idCardNo": "shouldNotBeAffected",
-                    "firstName": "Andrew",
-                    "lastName": "Kowalski",
                     "phoneNumber": "999999999",
-                    "birthday": "1900-01-01"
+                    "birthday": "1990-01-01"
                 }
                 """;
 
         // when + then
-        mvc.perform(put("/patients/{email}", patient.getEmail())
+        mvc.perform(put("/patients/{email}", "test@gmail.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updateRequest))
                 .andExpect(status().isOk());
-        Patient updatedPatient = patientRepository.findByEmailIgnoreCase("updatedEmail@gmail.com").orElseThrow();
+        Patient updatedPatient = patientRepository.findByUserEmailIgnoreCase("test@gmail.com").orElseThrow();
         assertAll(
                 () -> assertThat(updatedPatient.getIdCardNo()).isEqualTo(originalIdCardNo),
-                () -> assertThat(updatedPatient.getFirstName()).isEqualTo("Andrew"),
-                () -> assertThat(updatedPatient.getLastName()).isEqualTo("Kowalski"),
-                () -> assertThat(updatedPatient.getPhoneNumber()).isEqualTo("999999999")
+                () -> assertThat(updatedPatient.getPhoneNumber()).isEqualTo("999999999"),
+                () -> assertThat(updatedPatient.getBirthday()).isEqualTo(LocalDate.of(1990, 1, 1))
         );
     }
 
     @Test
     void updatePatient_WithNullValue_AnsweredWithBadRequestAndPatientNotChanged() throws Exception {
         // given
-        Patient patient = Patient.builder().email("test@gmail.com").password("pass1234").idCardNo("ABC123456")
-                .firstName("Wiktor").lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
+        Patient patient = Patient.builder().idCardNo("ABC123456").phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
         patientRepository.save(patient);
+        User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
+                .lastName("Test").build();
+        user.assignPatient(patient);
+        userRepository.save(user);
         String updateRequest = """
                 {
-                    "email": null,
-                    "password": "updatedPass",
-                    "idCardNo": "shouldNotBeAffected",
-                    "firstName": "Andrew",
-                    "lastName": "Kowalski",
-                    "phoneNumber": "999999999",
-                    "birthday": "1900-01-01"
+                    "phoneNumber": null,
+                    "birthday": "1990-01-01"
                 }
                 """;
 
         // when + then
-        mvc.perform(put("/patients/{email}", patient.getEmail())
+        mvc.perform(put("/patients/{email}", "test@gmail.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updateRequest))
                 .andExpect(status().isBadRequest());
-        Patient unchangedPatient = patientRepository.findByEmailIgnoreCase("test@gmail.com").orElseThrow();
+        Patient unchangedPatient = patientRepository.findByUserEmailIgnoreCase("test@gmail.com").orElseThrow();
         assertAll(
-                () -> assertThat(unchangedPatient.getEmail()).isEqualTo("test@gmail.com"),
-                () -> assertThat(unchangedPatient.getPassword()).isEqualTo("pass1234"),
-                () -> assertThat(unchangedPatient.getFirstName()).isEqualTo("Wiktor"),
-                () -> assertThat(unchangedPatient.getLastName()).isEqualTo("Test"),
                 () -> assertThat(unchangedPatient.getPhoneNumber()).isEqualTo("500500500"),
                 () -> assertThat(unchangedPatient.getBirthday()).isEqualTo(LocalDate.of(1999, 1, 1))
         );
