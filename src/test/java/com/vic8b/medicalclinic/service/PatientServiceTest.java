@@ -1,14 +1,17 @@
 package com.vic8b.medicalclinic.service;
 
-import com.vic8b.medicalclinic.command.ChangePasswordCommand;
 import com.vic8b.medicalclinic.command.CreatePatientCommand;
+import com.vic8b.medicalclinic.command.CreateUserCommand;
 import com.vic8b.medicalclinic.command.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.PatientDto;
 import com.vic8b.medicalclinic.exception.PatientAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.PatientNotFoundException;
 import com.vic8b.medicalclinic.mapper.PatientMapper;
+import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.Patient;
+import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.PatientRepository;
+import com.vic8b.medicalclinic.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,24 +33,31 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PatientServiceTest {
     PatientRepository patientRepository;
-    PatientMapper mapper;
+    UserRepository userRepository;
+    PatientMapper patientMapper;
+    UserMapper userMapper;
     PatientService patientService;
 
     @BeforeEach
     void setup() {
         patientRepository = Mockito.mock(PatientRepository.class);
-        mapper = Mappers.getMapper(PatientMapper.class);
-        patientService = new PatientService(patientRepository, mapper);
+        userRepository = Mockito.mock(UserRepository.class);
+        patientMapper = Mappers.getMapper(PatientMapper.class);
+        userMapper = Mappers.getMapper(UserMapper.class);
+        patientService = new PatientService(patientRepository, userRepository, patientMapper, userMapper);
     }
 
     @Test
     void addPatient_WithCorrectCommand_ReturnedPatientDto() {
         // given
-        CreatePatientCommand command = new CreatePatientCommand("test@gmail.com", "pass1234", "1234", "Wiktor",
-                "Test", "500500500", LocalDate.of(1999, 1, 1));
+        CreateUserCommand createUserCommand = new CreateUserCommand("username", "test@gmail.com", "pass1234", "Wiktor", "Test");
+        CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, "1234", "500500500", LocalDate.of(1999, 1, 1));
+        User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
+                .lastName("Test").build();
+        when(userRepository.findByEmailIgnoreCase("test@gmail.com")).thenReturn(Optional.of(user));
 
         // when
-        PatientDto patientDto = patientService.addPatient(command);
+        PatientDto patientDto = patientService.addPatient(createPatientCommand);
 
         // then
         assertAll(
@@ -57,89 +67,76 @@ class PatientServiceTest {
                 () -> assertThat(patientDto.phoneNumber()).isEqualTo("500500500"),
                 () -> assertThat(patientDto.birthday()).isEqualTo(LocalDate.of(1999, 1, 1))
         );
-        verify(patientRepository).add(any(Patient.class));
+        verify(patientRepository).save(any(Patient.class));
     }
 
     @Test
     void removePatientByEmail_WithCorrectEmail_RepositoryRemoveInvoked() {
         // given
         String email = "test@gmail.com";
+        Patient patient = Patient.builder().idCardNo("1234").phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
+        User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
+                .lastName("Test").build();
+        user.assignPatient(patient);
+        when(patientRepository.findByUserEmailIgnoreCase(email)).thenReturn(Optional.of(patient));
 
         // when
         patientService.removePatientByEmail(email);
 
         // then
-        verify(patientRepository).removeByEmail(email);
+        verify(patientRepository).delete(any(Patient.class));
+        verify(userRepository).save(user);
+        verify(patientRepository).delete(patient);
     }
 
     @Test
     void updatePatient_WithCorrectCommand_ReturnedUpdatedPatientDto() {
         // given
         String searchedEmail = "test@gmail.com";
-        Patient patient = Patient.builder().email(searchedEmail).password("pass1234").idCardNo("1234").firstName("Wiktor")
-                .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
-        when(patientRepository.findByEmail(searchedEmail)).thenReturn(Optional.of(patient));
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("test123@gmail.com", "pass1234", "1234", "Andrzej",
-                "Kowalski", "500500500", LocalDate.of(1999, 1, 1));
-        when(patientRepository.findByEmail(updatePatientCommand.email())).thenReturn(Optional.empty());
+        Patient patient = Patient.builder().idCardNo("1234").phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
+        when(patientRepository.findByUserEmailIgnoreCase(searchedEmail)).thenReturn(Optional.of(patient));
+        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("500500500",
+                LocalDate.of(1999, 1, 1));
 
         // when
         PatientDto result = patientService.updatePatient(searchedEmail, updatePatientCommand);
 
         // then
         assertAll(
-                () -> assertThat(result.email()).isEqualTo("test123@gmail.com"),
-                () -> assertThat(result.firstName()).isEqualTo("Andrzej"),
-                () -> assertThat(result.lastName()).isEqualTo("Kowalski"),
-                () -> assertThat(patient.getEmail()).isEqualTo("test123@gmail.com")
+                () -> assertThat(result.phoneNumber()).isEqualTo("500500500"),
+                () -> assertThat(result.birthday()).isEqualTo(LocalDate.of(1999, 1, 1))
         );
-    }
-
-    @Test
-    void changePassword_WithCorrectPasswordCommand_PasswordChanged() {
-        // given
-        String email = "test@gmail.com";
-        Patient patient = Patient.builder().email(email).password("pass1234").idCardNo("1234").firstName("Wiktor")
-                .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
-        when(patientRepository.findByEmail(email)).thenReturn(Optional.of(patient));
-        ChangePasswordCommand changePasswordCommand = new ChangePasswordCommand("4321ssap");
-
-        // when
-        patientService.changePassword(email, changePasswordCommand);
-
-        // then
-        assertThat(patient.getPassword()).isEqualTo(changePasswordCommand.password());
     }
 
     @Test
     void getPatientByEmail_WithExistingEmail_ReturnedPatientDto() {
         // given
         String email = "test@gmail.com";
-        Patient patient = Patient.builder().email(email).password("pass1234").idCardNo("1234").firstName("Wiktor")
-                .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build();
-        when(patientRepository.findByEmail(email)).thenReturn(Optional.of(patient));
+        Patient patient = Patient.builder().idCardNo("1234").phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
+        when(patientRepository.findByUserEmailIgnoreCase(email)).thenReturn(Optional.of(patient));
 
         // when
         PatientDto patientByEmail = patientService.getPatientByEmail(email);
 
         // then
         assertAll(
-                () -> assertThat(patientByEmail.email()).isEqualTo(email),
-                () -> assertThat(patientByEmail.firstName()).isEqualTo("Wiktor"),
-                () -> assertThat(patientByEmail.lastName()).isEqualTo("Test"),
+                () -> assertThat(patientByEmail.phoneNumber()).isEqualTo("500500500"),
                 () -> assertThat(patientByEmail.birthday()).isEqualTo(LocalDate.of(1999, 1, 1))
         );
-        verify(patientRepository).findByEmail(email);
+        verify(patientRepository).findByUserEmailIgnoreCase(email);
     }
 
     @Test
     void getPatients_WithExistingPatients_ReturnedPatientDtos() {
         // given
         List<Patient> patients = List.of(
-                Patient.builder().email("test@gmail.com").password("pass1234").idCardNo("1234").firstName("Wiktor")
-                        .lastName("Test").phoneNumber("500500500").birthday(LocalDate.of(1999, 1, 1)).build(),
-                Patient.builder().email("test2@gmail.com").password("pass12345").idCardNo("5555").firstName("Andrzej")
-                        .lastName("Kowalski").phoneNumber("600600600").birthday(LocalDate.of(1988, 12, 12)).build()
+                Patient.builder().idCardNo("1234").phoneNumber("500500500")
+                        .birthday(LocalDate.of(1999, 1, 1)).build(),
+                Patient.builder().idCardNo("5555").phoneNumber("600600600")
+                        .birthday(LocalDate.of(1990, 1, 1)).build()
         );
         when(patientRepository.findAll()).thenReturn(patients);
 
@@ -149,21 +146,38 @@ class PatientServiceTest {
         // then
         assertAll(
                 () -> assertThat(result).hasSize(2),
-                () -> assertThat(result.get(0).email()).isEqualTo("test@gmail.com"),
-                () -> assertThat(result.get(0).firstName()).isEqualTo("Wiktor"),
-                () -> assertThat(result.get(1).email()).isEqualTo("test2@gmail.com"),
-                () -> assertThat(result.get(1).firstName()).isEqualTo("Andrzej")
+                () -> assertThat(result.get(0).phoneNumber()).isEqualTo("500500500"),
+                () -> assertThat(result.get(0).birthday()).isEqualTo(LocalDate.of(1999, 1, 1)),
+                () -> assertThat(result.get(1).phoneNumber()).isEqualTo("600600600"),
+                () -> assertThat(result.get(1).birthday()).isEqualTo(LocalDate.of(1990, 1, 1))
         );
         verify(patientRepository).findAll();
+    }
+
+    @Test
+    void addPatient_WithExistingIdCardNo_ThrownPatientAlreadyExistsException() {
+        // given
+        String existingIdCardNo = "ABC123456";
+        CreateUserCommand createUserCommand = new CreateUserCommand("username", "test@gmail.com", "pass1234", "Wiktor", "Test");
+        CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, existingIdCardNo, "500500500", LocalDate.of(1999, 1, 1));
+        when(patientRepository.existsByIdCardNo(existingIdCardNo)).thenReturn(true);
+
+        // when + then
+        assertThatThrownBy(() -> patientService.addPatient(createPatientCommand))
+                .isInstanceOf(PatientAlreadyExistsException.class)
+                .hasMessage("Patient with id card number ABC123456 already exists");
     }
 
     @Test
     void updatePatient_WithNotExistingCurrentEmail_ThrownPatientNotFoundException() {
         // given
         String notExistingEmail = "test@gmail.com";
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("test123@gmail.com", "pass1234", "1234", "Andrzej",
-                "Kowalski", "500500500", LocalDate.of(1999, 1, 1));
-        when(patientRepository.findByEmail(notExistingEmail)).thenReturn(Optional.empty());
+        Patient patient = Patient.builder().idCardNo("1234").phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
+        when(patientRepository.findByUserEmailIgnoreCase(notExistingEmail)).thenReturn(Optional.of(patient));
+        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("500500500",
+                LocalDate.of(1999, 1, 1));
+        when(patientRepository.findByUserEmailIgnoreCase(notExistingEmail)).thenReturn(Optional.empty());
 
         // when + then
         assertThatThrownBy(() -> patientService.updatePatient(notExistingEmail, updatePatientCommand))
@@ -172,43 +186,10 @@ class PatientServiceTest {
     }
 
     @Test
-    void updatePatient_WithEmailUsedByOtherPatient_ThrownPatientAlreadyExistsException() {
-        // given
-        Patient firstPatient = Patient.builder().email("test@gmail.com").password("pass1234")
-                .idCardNo("1234").firstName("Wiktor")
-                .lastName("Test").phoneNumber("500500500")
-                .birthday(LocalDate.of(1999, 1, 1)).build();
-        Patient secondPatient = Patient.builder().email("existing@gmail.com").password("pass12345").idCardNo("1234").firstName("Andrzej").lastName("Test").phoneNumber("600600600").birthday(LocalDate.of(1999, 2, 2)).build();
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand(secondPatient.getEmail(), firstPatient.getPassword(), firstPatient.getIdCardNo(),
-                firstPatient.getFirstName(), firstPatient.getLastName(), firstPatient.getPhoneNumber(),
-                firstPatient.getBirthday());
-        when(patientRepository.findByEmail(firstPatient.getEmail())).thenReturn(Optional.of(firstPatient));
-        when(patientRepository.findByEmail(secondPatient.getEmail())).thenReturn(Optional.of(secondPatient));
-
-        // when + then
-        assertThatThrownBy(() -> patientService.updatePatient(firstPatient.getEmail(), updatePatientCommand))
-                .isInstanceOf(PatientAlreadyExistsException.class)
-                .hasMessage("Patient with email existing@gmail.com already exists");
-    }
-
-    @Test
-    void changePassword_WithNotExistingEmail_ThrownPatientNotFoundException() {
-        // given
-        String notExistingEmail = "test@gmail.com";
-        ChangePasswordCommand changePasswordCommand = new ChangePasswordCommand("test");
-        when(patientRepository.findByEmail(notExistingEmail)).thenReturn(Optional.empty());
-
-        // when + then
-        assertThatThrownBy(() -> patientService.changePassword(notExistingEmail, changePasswordCommand))
-                .isInstanceOf(PatientNotFoundException.class)
-                .hasMessage("Patient with email test@gmail.com not found");
-    }
-
-    @Test
     void getPatientByEmail_WithNotExistingEmail_ThrownPatientNotFoundException() {
         // given
         String notExistingEmail = "test@gmail.com";
-        when(patientRepository.findByEmail(notExistingEmail)).thenReturn(Optional.empty());
+        when(patientRepository.findByUserEmailIgnoreCase(notExistingEmail)).thenReturn(Optional.empty());
 
         // when + then
         assertThatThrownBy(() -> patientService.getPatientByEmail(notExistingEmail))

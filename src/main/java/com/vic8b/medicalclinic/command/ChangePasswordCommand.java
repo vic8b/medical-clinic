@@ -1,6 +1,6 @@
 package com.vic8b.medicalclinic.command;
 
-import lombok.NonNull;
+import jakarta.validation.constraints.NotBlank;
 
-public record ChangePasswordCommand(@NonNull String password) {
+public record ChangePasswordCommand(@NotBlank String password) {
 }

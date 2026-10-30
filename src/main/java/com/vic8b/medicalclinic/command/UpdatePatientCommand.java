@@ -1,10 +1,10 @@
 package com.vic8b.medicalclinic.command;
 
-import lombok.NonNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 
 import java.time.LocalDate;
 
-public record UpdatePatientCommand(@NonNull String email, @NonNull String password, @NonNull String idCardNo,
-                                   @NonNull String firstName, @NonNull String lastName, @NonNull String phoneNumber,
-                                   @NonNull LocalDate birthday) {
+public record UpdatePatientCommand(@NotBlank String phoneNumber, @NotNull @PastOrPresent LocalDate birthday) {
 }
