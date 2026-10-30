@@ -51,7 +51,7 @@ public class UserService {
         User user = findUserOrThrow(userId);
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new PatientNotFoundException(patientId));
-        validateUserAndPatientExistingRelations(user, patient);
+        validateAssignmentAvailability(user, patient);
         user.assignPatient(patient);
         userRepository.save(user);
         return userMapper.toDto(user);
@@ -79,7 +79,7 @@ public class UserService {
         }
     }
 
-    private static void validateUserAndPatientExistingRelations(User user, Patient patient) {
+    private void validateAssignmentAvailability(User user, Patient patient) {
         if (user.getPatient() != null) {
             throw new UserAlreadyHasPatientException(user.getId());
         }

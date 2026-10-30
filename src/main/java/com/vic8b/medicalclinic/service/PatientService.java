@@ -67,7 +67,7 @@ public class PatientService {
                 .toList();
     }
 
-    private static void validateUserDoesNotHavePatient(User user) {
+    private void validateUserDoesNotHavePatient(User user) {
         if (user.getPatient() != null) {
             throw new UserAlreadyHasPatientException(user.getId());
         }
