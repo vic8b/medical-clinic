@@ -12,6 +12,8 @@ import com.vic8b.medicalclinic.model.Patient;
 import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.PatientRepository;
 import com.vic8b.medicalclinic.repository.UserRepository;
+import com.vic8b.medicalclinic.validator.PatientValidator;
+import com.vic8b.medicalclinic.validator.UserValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,8 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PatientServiceTest {
@@ -37,6 +38,8 @@ class PatientServiceTest {
     PatientMapper patientMapper;
     UserMapper userMapper;
     PatientService patientService;
+    PatientValidator patientValidator;
+    UserValidator userValidator;
 
     @BeforeEach
     void setup() {
@@ -44,7 +47,9 @@ class PatientServiceTest {
         userRepository = Mockito.mock(UserRepository.class);
         patientMapper = Mappers.getMapper(PatientMapper.class);
         userMapper = Mappers.getMapper(UserMapper.class);
-        patientService = new PatientService(patientRepository, userRepository, patientMapper, userMapper);
+        patientValidator = Mockito.mock(PatientValidator.class);
+        userValidator = Mockito.mock(UserValidator.class);
+        patientService = new PatientService(patientRepository, userRepository, patientMapper, userMapper, patientValidator, userValidator);
     }
 
     @Test
@@ -166,7 +171,9 @@ class PatientServiceTest {
         String existingIdCardNo = "ABC123456";
         CreateUserCommand createUserCommand = new CreateUserCommand("username", "test@gmail.com", "pass1234", "Wiktor", "Test");
         CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, existingIdCardNo, "500500500", LocalDate.of(1999, 1, 1));
-        when(patientRepository.existsByIdCardNo(existingIdCardNo)).thenReturn(true);
+        doThrow(PatientAlreadyExistsException.byCardIdNo(existingIdCardNo))
+                .when(patientValidator)
+                .validateIdCardNoAvailability(createPatientCommand);
 
         // when + then
         assertThatThrownBy(() -> patientService.addPatient(createPatientCommand))
@@ -178,9 +185,6 @@ class PatientServiceTest {
     void updatePatient_WithNotExistingCurrentEmail_ThrownPatientNotFoundException() {
         // given
         String notExistingEmail = "test@gmail.com";
-        Patient patient = Patient.builder().idCardNo("1234").phoneNumber("500500500")
-                .birthday(LocalDate.of(1999, 1, 1)).build();
-        when(patientRepository.findByUserEmailIgnoreCase(notExistingEmail)).thenReturn(Optional.of(patient));
         UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("testUsername",
                 "test@gmail.com", "testPass", "Wiktor", "Test",
                 "500500500", LocalDate.of(1900, 12, 12));

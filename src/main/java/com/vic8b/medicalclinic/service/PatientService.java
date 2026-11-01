@@ -11,6 +11,8 @@ import com.vic8b.medicalclinic.model.Patient;
 import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.PatientRepository;
 import com.vic8b.medicalclinic.repository.UserRepository;
+import com.vic8b.medicalclinic.validator.PatientValidator;
+import com.vic8b.medicalclinic.validator.UserValidator;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +27,14 @@ public class PatientService {
     private final UserRepository userRepository;
     private final PatientMapper patientMapper;
     private final UserMapper userMapper;
+    private final PatientValidator patientValidator;
+    private final UserValidator userValidator;
 
     @Transactional
     public PatientDto addPatient(@NonNull CreatePatientCommand createPatientCommand) {
-        validateIdCardNoAvailability(createPatientCommand);
+        patientValidator.validateIdCardNoAvailability(createPatientCommand);
         User user = findOrCreateUser(createPatientCommand.userCommand());
-        validateUserDoesNotHavePatient(user);
+        patientValidator.validateUserDoesNotHavePatient(user);
         Patient patient = patientMapper.toEntity(createPatientCommand);
         patient.assignUser(user);
         patientRepository.save(patient);
@@ -48,7 +52,7 @@ public class PatientService {
     public PatientDto updatePatient(@NonNull String currentEmail, @NonNull UpdatePatientCommand command) {
         Patient patient = findPatientByEmailOrThrow(currentEmail);
         User user = patient.getUser();
-        validateUpdatedUserAvailability(command, user);
+        userValidator.validateUpdatedUserAvailability(user, command.email(), command.username());
         patient.update(command.phoneNumber(), command.birthday());
         user.update(command.username(), command.email(), command.password(), command.firstName(), command.lastName());
         patientRepository.save(patient);
@@ -65,44 +69,19 @@ public class PatientService {
                 .toList();
     }
 
-    private void validateUserDoesNotHavePatient(User user) {
-        if (user.getPatient() != null) {
-            throw new UserAlreadyHasPatientException(user.getId());
-        }
-    }
-
-    private void validateIdCardNoAvailability(CreatePatientCommand command) {
-        if (patientRepository.existsByIdCardNo(command.idCardNo())) {
-            throw PatientAlreadyExistsException.byCardIdNo(command.idCardNo());
-        }
-    }
-
     private User findOrCreateUser(CreateUserCommand createUserCommand) {
         return userRepository.findByEmailIgnoreCase(createUserCommand.email())
                 .orElseGet(() -> createUser(createUserCommand));
     }
 
     private User createUser(CreateUserCommand createUserCommand) {
-        if (userRepository.existsByUsername(createUserCommand.username())) {
-            throw UserAlreadyExistsException.byUsername(createUserCommand.username());
-        }
-        if (userRepository.existsByEmailIgnoreCase(createUserCommand.email())) {
-            throw UserAlreadyExistsException.byEmail(createUserCommand.email());
-        }
+        userValidator.validateUsernameAvailability(createUserCommand.username());
+        userValidator.validateEmailAvailability(createUserCommand.email());
         return userRepository.save(userMapper.toEntity(createUserCommand));
     }
 
     private Patient findPatientByEmailOrThrow(String email) {
         return patientRepository.findByUserEmailIgnoreCase(email)
                 .orElseThrow(() -> new PatientNotFoundException(email));
-    }
-
-    private void validateUpdatedUserAvailability(UpdatePatientCommand command, User user) {
-        if (!user.getEmail().equalsIgnoreCase(command.email()) && userRepository.existsByEmailIgnoreCase(command.email())) {
-            throw UserAlreadyExistsException.byEmail(command.email());
-        }
-        if (!user.getUsername().equalsIgnoreCase(command.username()) && userRepository.existsByUsername(command.username())) {
-            throw UserAlreadyExistsException.byUsername(command.username());
-        }
     }
 }
