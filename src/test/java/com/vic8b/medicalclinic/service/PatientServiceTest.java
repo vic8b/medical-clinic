@@ -78,15 +78,14 @@ class PatientServiceTest {
                 .birthday(LocalDate.of(1999, 1, 1)).build();
         User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
                 .lastName("Test").build();
-        user.assignPatient(patient);
+        patient.assignUser(user);
         when(patientRepository.findByUserEmailIgnoreCase(email)).thenReturn(Optional.of(patient));
 
         // when
         patientService.removePatientByEmail(email);
 
         // then
-        verify(patientRepository).delete(any(Patient.class));
-        verify(userRepository).save(user);
+        assertThat(user.getPatient()).isNull();
         verify(patientRepository).delete(patient);
     }
 
@@ -96,17 +95,24 @@ class PatientServiceTest {
         String searchedEmail = "test@gmail.com";
         Patient patient = Patient.builder().idCardNo("1234").phoneNumber("500500500")
                 .birthday(LocalDate.of(1999, 1, 1)).build();
+        User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
+                .lastName("Test").build();
+        patient.assignUser(user);
         when(patientRepository.findByUserEmailIgnoreCase(searchedEmail)).thenReturn(Optional.of(patient));
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("500500500",
-                LocalDate.of(1999, 1, 1));
+        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("testUsername",
+                "test@gmail.com", "testPass", "Wiktor", "Test",
+                "500500500", LocalDate.of(1990, 12, 12));
 
         // when
         PatientDto result = patientService.updatePatient(searchedEmail, updatePatientCommand);
 
         // then
         assertAll(
+                () -> assertThat(result.email()).isEqualTo("test@gmail.com"),
+                () -> assertThat(result.firstName()).isEqualTo("Wiktor"),
+                () -> assertThat(result.lastName()).isEqualTo("Test"),
                 () -> assertThat(result.phoneNumber()).isEqualTo("500500500"),
-                () -> assertThat(result.birthday()).isEqualTo(LocalDate.of(1999, 1, 1))
+                () -> assertThat(result.birthday()).isEqualTo(LocalDate.of(1990, 12, 12))
         );
     }
 
@@ -175,8 +181,9 @@ class PatientServiceTest {
         Patient patient = Patient.builder().idCardNo("1234").phoneNumber("500500500")
                 .birthday(LocalDate.of(1999, 1, 1)).build();
         when(patientRepository.findByUserEmailIgnoreCase(notExistingEmail)).thenReturn(Optional.of(patient));
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("500500500",
-                LocalDate.of(1999, 1, 1));
+        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("testUsername",
+                "test@gmail.com", "testPass", "Wiktor", "Test",
+                "500500500", LocalDate.of(1900, 12, 12));
         when(patientRepository.findByUserEmailIgnoreCase(notExistingEmail)).thenReturn(Optional.empty());
 
         // when + then

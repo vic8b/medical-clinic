@@ -21,7 +21,8 @@ public class Patient {
     private String phoneNumber;
     @Column(nullable = false)
     private LocalDate birthday;
-    @OneToOne(mappedBy = "patient")
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
 
     @Builder
@@ -38,9 +39,6 @@ public class Patient {
 
     public void assignUser(@NonNull User user) {
         this.user = user;
-    }
-
-    public void removeUser() {
-        this.user = null;
+        user.assignPatient(this);
     }
 }

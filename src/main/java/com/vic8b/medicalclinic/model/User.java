@@ -24,12 +24,19 @@ public class User {
     private String firstName;
     @Column(nullable = false)
     private String lastName;
-    @OneToOne
-    @JoinColumn(name = "patient_id", referencedColumnName = "id")
+    @OneToOne(mappedBy = "user")
     private Patient patient;
 
     @Builder
     public User(@NonNull String username, @NonNull String email, @NonNull String password, @NonNull String firstName, @NonNull String lastName) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
+    public void update(String username, String email, String password, String firstName, String lastName) {
         this.username = username;
         this.email = email;
         this.password = password;
@@ -46,13 +53,9 @@ public class User {
 
     public void assignPatient(@NonNull Patient patient) {
         this.patient = patient;
-        patient.assignUser(this);
     }
 
-    public void removeAssignedPatient() {
-        if (patient != null) {
-            patient.removeUser();
-            patient = null;
-        }
+    public void clearPatient() {
+        this.patient = null;
     }
 }

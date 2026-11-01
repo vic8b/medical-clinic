@@ -102,10 +102,11 @@ class PatientControllerTest {
     void updatePatient_WithCorrectEmailAndCorrectUpdatePatientCommand_AnsweredWithUpdatedPatient() throws Exception {
         // given
         String email = "test@gmail.com";
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("600600600",
-                LocalDate.of(1900, 12, 12));
-        PatientDto updatedPatientDto = new PatientDto("test@gmail.com", "Wiktor",
-                "Test", updatePatientCommand.phoneNumber(), updatePatientCommand.birthday());
+        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("testUsername",
+                "test@gmail.com", "testPass", "Wiktor", "Test",
+                "600600600", LocalDate.of(1900, 12, 12));
+        PatientDto updatedPatientDto = new PatientDto(updatePatientCommand.email(), updatePatientCommand.firstName(),
+                updatePatientCommand.lastName(), updatePatientCommand.phoneNumber(), updatePatientCommand.birthday());
         when(patientService.updatePatient(email, updatePatientCommand)).thenReturn(updatedPatientDto);
 
         // when + then
@@ -113,6 +114,9 @@ class PatientControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(updatePatientCommand)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("test@gmail.com"))
+                .andExpect(jsonPath("$.firstName").value("Wiktor"))
+                .andExpect(jsonPath("$.lastName").value("Test"))
                 .andExpect(jsonPath("$.phoneNumber").value("600600600"))
                 .andExpect(jsonPath("$.birthday").value("1900-12-12"));
     }
@@ -160,8 +164,9 @@ class PatientControllerTest {
     void updatePatient_WithNotExistingPatientEmail_AnsweredWithNotFoundStatus() throws Exception {
         // given
         String email = "notExistingEmail@gmail.com";
-        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("600600600",
-                LocalDate.of(1900, 12, 12));
+        UpdatePatientCommand updatePatientCommand = new UpdatePatientCommand("testUsername",
+                email, "testPass", "Wiktor", "Test",
+                "600600600", LocalDate.of(1900, 12, 12));
         when(patientService.updatePatient(email, updatePatientCommand)).thenThrow(new PatientNotFoundException(email));
 
         // when + then

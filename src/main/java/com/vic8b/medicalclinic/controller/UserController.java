@@ -17,7 +17,7 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
 
-    @GetMapping()
+    @GetMapping
     public List<UserDto> getUsers() {
         return userService.getUsers();
     }
@@ -31,11 +31,6 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto addUser(@Valid @RequestBody CreateUserCommand command) {
         return userService.addUser(command);
-    }
-
-    @PutMapping("/{userId}/patient/{patientId}")
-    public UserDto assignPatient(@PathVariable Long userId, @PathVariable Long patientId) {
-        return userService.assignPatient(userId, patientId);
     }
 
     @PatchMapping("/{id}/password")

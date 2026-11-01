@@ -34,16 +34,20 @@ class PatientIntegrationTest {
 
     @BeforeEach
     void setup() {
-        userRepository.deleteAllInBatch();
         patientRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
     }
 
     @Test
     void addPatient_WithExistingIdCardNo_AnsweredWithStatusConflict() throws Exception {
         // given
         String existingIdCardNo = "ABC123456";
+        User user = User.builder().username("existingUsername").email("existing@gmail.com").password("pass1234").firstName("Wiktor")
+                .lastName("Test").build();
+        userRepository.save(user);
         Patient patient = Patient.builder().idCardNo(existingIdCardNo).phoneNumber("500500500")
                 .birthday(LocalDate.of(1999, 1, 1)).build();
+        patient.assignUser(user);
         patientRepository.save(patient);
         String addRequest = """
                 {
@@ -98,15 +102,21 @@ class PatientIntegrationTest {
     void updatePatient_WithChangedIdCardNo_AnsweredOkAndIdCardNotChanged() throws Exception {
         // given
         String originalIdCardNo = "ABC123456";
-        Patient patient = Patient.builder().idCardNo(originalIdCardNo).phoneNumber("500500500")
-                .birthday(LocalDate.of(1999, 1, 1)).build();
-        patientRepository.save(patient);
         User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
                 .lastName("Test").build();
-        user.assignPatient(patient);
         userRepository.save(user);
+        Patient patient = Patient.builder().idCardNo(originalIdCardNo).phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
+        patient.assignUser(user);
+        patientRepository.save(patient);
+
         String updateRequest = """
                 {
+                    "username": "updatedUsername",
+                    "email": "updatedEmail@gmail.com",
+                    "password": "updatedPass",
+                    "firstName": "Andrew",
+                    "lastName": "Kowalski",
                     "phoneNumber": "999999999",
                     "birthday": "1990-01-01"
                 }
@@ -117,9 +127,13 @@ class PatientIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updateRequest))
                 .andExpect(status().isOk());
-        Patient updatedPatient = patientRepository.findByUserEmailIgnoreCase("test@gmail.com").orElseThrow();
+        Patient updatedPatient = patientRepository.findByUserEmailIgnoreCase("updatedEmail@gmail.com").orElseThrow();
         assertAll(
                 () -> assertThat(updatedPatient.getIdCardNo()).isEqualTo(originalIdCardNo),
+                () -> assertThat(updatedPatient.getUser().getUsername()).isEqualTo("updatedUsername"),
+                () -> assertThat(updatedPatient.getUser().getEmail()).isEqualTo("updatedEmail@gmail.com"),
+                () -> assertThat(updatedPatient.getUser().getFirstName()).isEqualTo("Andrew"),
+                () -> assertThat(updatedPatient.getUser().getLastName()).isEqualTo("Kowalski"),
                 () -> assertThat(updatedPatient.getPhoneNumber()).isEqualTo("999999999"),
                 () -> assertThat(updatedPatient.getBirthday()).isEqualTo(LocalDate.of(1990, 1, 1))
         );
@@ -128,15 +142,20 @@ class PatientIntegrationTest {
     @Test
     void updatePatient_WithNullValue_AnsweredWithBadRequestAndPatientNotChanged() throws Exception {
         // given
-        Patient patient = Patient.builder().idCardNo("ABC123456").phoneNumber("500500500")
-                .birthday(LocalDate.of(1999, 1, 1)).build();
-        patientRepository.save(patient);
         User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
                 .lastName("Test").build();
-        user.assignPatient(patient);
         userRepository.save(user);
+        Patient patient = Patient.builder().idCardNo("ABC123456").phoneNumber("500500500")
+                .birthday(LocalDate.of(1999, 1, 1)).build();
+        patient.assignUser(user);
+        patientRepository.save(patient);
         String updateRequest = """
                 {
+                    "username": "updatedUsername",
+                    "email": "updatedEmail@gmail.com",
+                    "password": "updatedPass",
+                    "firstName": "Andrew",
+                    "lastName": "Kowalski",
                     "phoneNumber": null,
                     "birthday": "1990-01-01"
                 }
@@ -149,6 +168,10 @@ class PatientIntegrationTest {
                 .andExpect(status().isBadRequest());
         Patient unchangedPatient = patientRepository.findByUserEmailIgnoreCase("test@gmail.com").orElseThrow();
         assertAll(
+                () -> assertThat(unchangedPatient.getUser().getUsername()).isEqualTo("username"),
+                () -> assertThat(unchangedPatient.getUser().getEmail()).isEqualTo("test@gmail.com"),
+                () -> assertThat(unchangedPatient.getUser().getFirstName()).isEqualTo("Wiktor"),
+                () -> assertThat(unchangedPatient.getUser().getLastName()).isEqualTo("Test"),
                 () -> assertThat(unchangedPatient.getPhoneNumber()).isEqualTo("500500500"),
                 () -> assertThat(unchangedPatient.getBirthday()).isEqualTo(LocalDate.of(1999, 1, 1))
         );

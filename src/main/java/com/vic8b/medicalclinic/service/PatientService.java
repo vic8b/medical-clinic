@@ -4,10 +4,7 @@ import com.vic8b.medicalclinic.command.CreatePatientCommand;
 import com.vic8b.medicalclinic.command.CreateUserCommand;
 import com.vic8b.medicalclinic.command.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.PatientDto;
-import com.vic8b.medicalclinic.exception.PatientAlreadyExistsException;
-import com.vic8b.medicalclinic.exception.PatientNotFoundException;
-import com.vic8b.medicalclinic.exception.UserAlreadyExistsException;
-import com.vic8b.medicalclinic.exception.UserAlreadyHasPatientException;
+import com.vic8b.medicalclinic.exception.*;
 import com.vic8b.medicalclinic.mapper.PatientMapper;
 import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.Patient;
@@ -35,24 +32,25 @@ public class PatientService {
         User user = findOrCreateUser(createPatientCommand.userCommand());
         validateUserDoesNotHavePatient(user);
         Patient patient = patientMapper.toEntity(createPatientCommand);
+        patient.assignUser(user);
         patientRepository.save(patient);
-        assignPatientToUser(user, patient);
         return patientMapper.toDto(patient);
     }
 
     @Transactional
     public void removePatientByEmail(@NonNull String email) {
         Patient patient = findPatientByEmailOrThrow(email);
-        User user = patient.getUser();
-        user.removeAssignedPatient();
-        userRepository.save(user);
+        patient.getUser().clearPatient();
         patientRepository.delete(patient);
     }
 
     @Transactional
     public PatientDto updatePatient(@NonNull String currentEmail, @NonNull UpdatePatientCommand command) {
         Patient patient = findPatientByEmailOrThrow(currentEmail);
+        User user = patient.getUser();
+        validateUpdatedUserAvailability(command, user);
         patient.update(command.phoneNumber(), command.birthday());
+        user.update(command.username(), command.email(), command.password(), command.firstName(), command.lastName());
         patientRepository.save(patient);
         return patientMapper.toDto(patient);
     }
@@ -79,11 +77,6 @@ public class PatientService {
         }
     }
 
-    private void assignPatientToUser(User user, Patient patient) {
-        user.assignPatient(patient);
-        userRepository.save(user);
-    }
-
     private User findOrCreateUser(CreateUserCommand createUserCommand) {
         return userRepository.findByEmailIgnoreCase(createUserCommand.email())
                 .orElseGet(() -> createUser(createUserCommand));
@@ -102,5 +95,14 @@ public class PatientService {
     private Patient findPatientByEmailOrThrow(String email) {
         return patientRepository.findByUserEmailIgnoreCase(email)
                 .orElseThrow(() -> new PatientNotFoundException(email));
+    }
+
+    private void validateUpdatedUserAvailability(UpdatePatientCommand command, User user) {
+        if (!user.getEmail().equalsIgnoreCase(command.email()) && userRepository.existsByEmailIgnoreCase(command.email())) {
+            throw UserAlreadyExistsException.byEmail(command.email());
+        }
+        if (!user.getUsername().equalsIgnoreCase(command.username()) && userRepository.existsByUsername(command.username())) {
+            throw UserAlreadyExistsException.byUsername(command.username());
+        }
     }
 }
