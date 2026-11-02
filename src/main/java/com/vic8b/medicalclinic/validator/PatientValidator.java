@@ -1,6 +1,5 @@
 package com.vic8b.medicalclinic.validator;
 
-import com.vic8b.medicalclinic.command.CreatePatientCommand;
 import com.vic8b.medicalclinic.exception.PatientAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.UserAlreadyHasPatientException;
 import com.vic8b.medicalclinic.model.User;
@@ -19,9 +18,9 @@ public class PatientValidator {
         }
     }
 
-    public void validateIdCardNoAvailability(CreatePatientCommand command) {
-        if (patientRepository.existsByIdCardNo(command.idCardNo())) {
-            throw PatientAlreadyExistsException.byCardIdNo(command.idCardNo());
+    public void validateIdCardNoAvailability(String idCardNo) {
+        if (patientRepository.existsByIdCardNo(idCardNo)) {
+            throw PatientAlreadyExistsException.byCardIdNo(idCardNo);
         }
     }
 }

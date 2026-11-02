@@ -59,7 +59,8 @@ class PatientServiceTest {
         CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, "1234", "500500500", LocalDate.of(1999, 1, 1));
         User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
                 .lastName("Test").build();
-        when(userRepository.findByEmailIgnoreCase("test@gmail.com")).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class)))
+                .thenReturn(user);
 
         // when
         PatientDto patientDto = patientService.addPatient(createPatientCommand);
@@ -173,7 +174,7 @@ class PatientServiceTest {
         CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, existingIdCardNo, "500500500", LocalDate.of(1999, 1, 1));
         doThrow(PatientAlreadyExistsException.byCardIdNo(existingIdCardNo))
                 .when(patientValidator)
-                .validateIdCardNoAvailability(createPatientCommand);
+                .validateIdCardNoAvailability(createPatientCommand.idCardNo());
 
         // when + then
         assertThatThrownBy(() -> patientService.addPatient(createPatientCommand))

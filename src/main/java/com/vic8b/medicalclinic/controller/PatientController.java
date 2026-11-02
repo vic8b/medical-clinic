@@ -1,6 +1,7 @@
 package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.command.CreatePatientCommand;
+import com.vic8b.medicalclinic.command.CreatePatientProfileCommand;
 import com.vic8b.medicalclinic.command.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.PatientDto;
 import com.vic8b.medicalclinic.service.PatientService;
@@ -31,6 +32,12 @@ public class PatientController {
     @ResponseStatus(HttpStatus.CREATED)
     public PatientDto addPatient(@Valid @RequestBody CreatePatientCommand command) {
         return patientService.addPatient(command);
+    }
+
+    @PostMapping("/users/{userId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public PatientDto createPatientProfile(@PathVariable Long userId, @Valid @RequestBody CreatePatientProfileCommand command) {
+        return patientService.createPatientProfile(userId, command);
     }
 
     @PutMapping("/{email}")
