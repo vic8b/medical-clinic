@@ -26,6 +26,8 @@ public class User {
     private String lastName;
     @OneToOne(mappedBy = "user")
     private Patient patient;
+    @OneToOne(mappedBy = "user")
+    private Doctor doctor;
 
     @Builder
     public User(@NonNull String username, @NonNull String email, @NonNull String password, @NonNull String firstName, @NonNull String lastName) {
@@ -55,7 +57,15 @@ public class User {
         this.patient = patient;
     }
 
+    public void assignDoctor(@NonNull Doctor doctor) {
+        this.doctor = doctor;
+    }
+
     public void clearPatient() {
         this.patient = null;
+    }
+
+    public void clearDoctor() {
+        this.doctor = null;
     }
 }

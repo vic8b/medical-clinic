@@ -1,11 +1,11 @@
 package com.vic8b.medicalclinic.controller;
 
-import com.vic8b.medicalclinic.command.CreatePatientCommand;
-import com.vic8b.medicalclinic.command.CreateUserCommand;
-import com.vic8b.medicalclinic.command.UpdatePatientCommand;
+import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
+import com.vic8b.medicalclinic.command.user.CreateUserCommand;
+import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.PatientDto;
-import com.vic8b.medicalclinic.exception.PatientNotFoundException;
-import com.vic8b.medicalclinic.exception.UserAlreadyHasPatientException;
+import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
+import com.vic8b.medicalclinic.exception.user.UserAlreadyHasPatientException;
 import com.vic8b.medicalclinic.service.PatientService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

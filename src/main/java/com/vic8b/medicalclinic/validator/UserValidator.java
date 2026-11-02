@@ -1,6 +1,6 @@
 package com.vic8b.medicalclinic.validator;
 
-import com.vic8b.medicalclinic.exception.UserAlreadyExistsException;
+import com.vic8b.medicalclinic.exception.user.UserAlreadyExistsException;
 import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package com.vic8b.medicalclinic.mapper;
 
-import com.vic8b.medicalclinic.command.CreatePatientCommand;
-import com.vic8b.medicalclinic.command.CreatePatientProfileCommand;
+import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
+import com.vic8b.medicalclinic.command.patient.CreatePatientProfileCommand;
 import com.vic8b.medicalclinic.dto.PatientDto;
 import com.vic8b.medicalclinic.model.Patient;
 import org.mapstruct.Mapper;
