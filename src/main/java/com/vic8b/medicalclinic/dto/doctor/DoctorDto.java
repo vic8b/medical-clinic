@@ -1,4 +1,6 @@
-package com.vic8b.medicalclinic.dto;
+package com.vic8b.medicalclinic.dto.doctor;
+
+import com.vic8b.medicalclinic.dto.facility.FacilityDto;
 
 import java.util.Set;
 

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "PATIENTS")
@@ -24,6 +25,8 @@ public class Patient {
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
+    @OneToMany(mappedBy = "patient")
+    private List<Appointment> appointments;
 
     @Builder
     public Patient(@NonNull String idCardNo, @NonNull String phoneNumber, @NonNull LocalDate birthday) {
@@ -40,5 +43,15 @@ public class Patient {
     public void assignUser(@NonNull User user) {
         this.user = user;
         user.assignPatient(this);
+    }
+
+    public void addAppointment(Appointment appointment) {
+        if (!appointments.contains(appointment)) {
+            appointments.add(appointment);
+        }
+    }
+
+    public void removeAppointment(Appointment appointment) {
+        appointments.remove(appointment);
     }
 }

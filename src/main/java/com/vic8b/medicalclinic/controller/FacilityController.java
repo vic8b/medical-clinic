@@ -1,8 +1,8 @@
 package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.command.facility.CreateFacilityCommand;
-import com.vic8b.medicalclinic.dto.FacilityDoctorDto;
-import com.vic8b.medicalclinic.dto.FacilityDto;
+import com.vic8b.medicalclinic.dto.doctor.FacilityDoctorDto;
+import com.vic8b.medicalclinic.dto.facility.FacilityDto;
 import com.vic8b.medicalclinic.service.FacilityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

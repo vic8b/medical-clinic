@@ -1,8 +1,8 @@
 package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.facility.CreateFacilityCommand;
-import com.vic8b.medicalclinic.dto.FacilityDoctorDto;
-import com.vic8b.medicalclinic.dto.FacilityDto;
+import com.vic8b.medicalclinic.dto.doctor.FacilityDoctorDto;
+import com.vic8b.medicalclinic.dto.facility.FacilityDto;
 import com.vic8b.medicalclinic.exception.facility.FacilityAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.facility.FacilityNotFoundException;
 import com.vic8b.medicalclinic.mapper.DoctorMapper;
