@@ -2,29 +2,48 @@ package com.vic8b.medicalclinic.handler;
 
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
 import com.vic8b.medicalclinic.exception.MedicalClinicException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy'T'HH:mm:ss");
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorMessageDto> handleUnexpectedException(Exception exception) {
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorMessageDto("Unknown error", HttpStatus.INTERNAL_SERVER_ERROR.value(), LocalDateTime.now().format(FORMAT)));
+    public ErrorMessageDto handleUnexpectedException(Exception exception, HttpServletResponse response) {
+        int exceptionStatusValue = HttpStatus.INTERNAL_SERVER_ERROR.value();
+        response.setStatus(exceptionStatusValue);
+        return ErrorMessageDto.of("Unknown error", exceptionStatusValue, getCurrentTimeStamp());
     }
 
     @ExceptionHandler(MedicalClinicException.class)
-    public ResponseEntity<ErrorMessageDto> handleMedicalClinicException(MedicalClinicException exception) {
-        return ResponseEntity
-                .status(exception.getStatus())
-                .body(new ErrorMessageDto(exception.getMessage(), exception.getStatus().value(), LocalDateTime.now().format(FORMAT)));
+    public ErrorMessageDto handleMedicalClinicException(MedicalClinicException exception, HttpServletResponse response) {
+        int exceptionStatusValue = exception.getStatus().value();
+        response.setStatus(exceptionStatusValue);
+        return ErrorMessageDto.of(exception.getMessage(), exceptionStatusValue, getCurrentTimeStamp());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ErrorMessageDto handleMethodArgumentNotValidException(MethodArgumentNotValidException exception, HttpServletResponse response) {
+        int exceptionStatusValue = HttpStatus.BAD_REQUEST.value();
+        response.setStatus(exceptionStatusValue);
+        List<String> errors = exception.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .toList();
+        return ErrorMessageDto.withErrors("Validation failed", exceptionStatusValue,
+                getCurrentTimeStamp(), errors);
+    }
+
+    private String getCurrentTimeStamp() {
+        return LocalDateTime.now().format(FORMAT);
     }
 }

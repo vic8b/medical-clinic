@@ -1,14 +1,21 @@
 package com.vic8b.medicalclinic.service;
 
-import com.vic8b.medicalclinic.command.ChangePasswordCommand;
-import com.vic8b.medicalclinic.command.CreatePatientCommand;
-import com.vic8b.medicalclinic.command.UpdatePatientCommand;
-import com.vic8b.medicalclinic.exception.PatientAlreadyExistsException;
-import com.vic8b.medicalclinic.exception.PatientNotFoundException;
+import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
+import com.vic8b.medicalclinic.command.patient.CreatePatientProfileCommand;
+import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
+import com.vic8b.medicalclinic.command.user.CreateUserCommand;
+import com.vic8b.medicalclinic.dto.patient.PatientDto;
+import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
+import com.vic8b.medicalclinic.exception.user.UserNotFoundException;
 import com.vic8b.medicalclinic.mapper.PatientMapper;
+import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.Patient;
-import com.vic8b.medicalclinic.dto.PatientDto;
+import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.PatientRepository;
+import com.vic8b.medicalclinic.repository.UserRepository;
+import com.vic8b.medicalclinic.validator.PatientValidator;
+import com.vic8b.medicalclinic.validator.UserValidator;
+import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,32 +25,49 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PatientService {
-    @NonNull
     private final PatientRepository patientRepository;
-    @NonNull
+    private final UserRepository userRepository;
     private final PatientMapper patientMapper;
+    private final UserMapper userMapper;
+    private final PatientValidator patientValidator;
+    private final UserValidator userValidator;
 
-    public PatientDto addPatient(@NonNull CreatePatientCommand command) {
-        Patient patient = patientMapper.toEntity(command);
-        patientRepository.add(patient);
+    @Transactional
+    public PatientDto addPatient(@NonNull CreatePatientCommand createPatientCommand) {
+        patientValidator.validateIdCardNoAvailability(createPatientCommand.idCardNo());
+        User user = createUser(createPatientCommand.userCommand());
+        Patient patient = patientMapper.toEntity(createPatientCommand);
+        patient.assignUser(user);
+        patientRepository.save(patient);
         return patientMapper.toDto(patient);
     }
 
-    public void removePatientByEmail(@NonNull String email) {
-        patientRepository.removeByEmail(email);
+    @Transactional
+    public PatientDto createPatientProfile(@NonNull Long userId, @NonNull CreatePatientProfileCommand command) {
+        patientValidator.validateIdCardNoAvailability(command.idCardNo());
+        User user = findUserByIdOrThrow(userId);
+        patientValidator.validateUserDoesNotHavePatient(user);
+        Patient patient = patientMapper.toEntity(command);
+        patient.assignUser(user);
+        patientRepository.save(patient);
+        return patientMapper.toDto(patient);
     }
 
+    @Transactional
+    public void removePatientByEmail(@NonNull String email) {
+        Patient patient = findPatientByEmailOrThrow(email);
+        patient.getUser().clearPatient();
+        patientRepository.delete(patient);
+    }
+
+    @Transactional
     public PatientDto updatePatient(@NonNull String currentEmail, @NonNull UpdatePatientCommand command) {
         Patient patient = findPatientByEmailOrThrow(currentEmail);
-        validateEmailAvailability(command, patient);
-        patient.update(command.email(), command.password(), command.idCardNo(), command.firstName(), command.lastName(),
-                command.phoneNumber(), command.birthday());
-        return patientMapper.toDto(patient);
-    }
-
-    public PatientDto changePassword(@NonNull String email, @NonNull ChangePasswordCommand command) {
-        Patient patient = findPatientByEmailOrThrow(email);
-        patient.changePassword(command.password());
+        User user = patient.getUser();
+        userValidator.validateUpdatedUserAvailability(user, command.email(), command.username());
+        patient.update(command.phoneNumber(), command.birthday());
+        user.update(command.username(), command.email(), command.password(), command.firstName(), command.lastName());
+        patientRepository.save(patient);
         return patientMapper.toDto(patient);
     }
 
@@ -57,16 +81,19 @@ public class PatientService {
                 .toList();
     }
 
-    private void validateEmailAvailability(UpdatePatientCommand command, Patient patient) {
-        patientRepository.findByEmail(command.email())
-                .filter(existingPatient -> !existingPatient.getId().equals(patient.getId()))
-                .ifPresent(existingPatient -> {
-                    throw new PatientAlreadyExistsException(command.email());
-                });
+    private User findUserByIdOrThrow(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
     }
 
-    private Patient findPatientByEmailOrThrow(@NonNull String email) {
-        return patientRepository.findByEmail(email)
+    private User createUser(CreateUserCommand createUserCommand) {
+        userValidator.validateUsernameAvailability(createUserCommand.username());
+        userValidator.validateEmailAvailability(createUserCommand.email());
+        return userRepository.save(userMapper.toEntity(createUserCommand));
+    }
+
+    private Patient findPatientByEmailOrThrow(String email) {
+        return patientRepository.findByUserEmailIgnoreCase(email)
                 .orElseThrow(() -> new PatientNotFoundException(email));
     }
 }
