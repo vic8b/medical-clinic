@@ -1,7 +1,7 @@
 package com.vic8b.medicalclinic.service;
 
+import com.vic8b.medicalclinic.command.patient.AssignPatientToUserCommand;
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
-import com.vic8b.medicalclinic.command.patient.CreatePatientProfileCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
 import com.vic8b.medicalclinic.command.user.CreateUserCommand;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
@@ -43,7 +43,7 @@ public class PatientService {
     }
 
     @Transactional
-    public PatientDto createPatientProfile(@NonNull Long userId, @NonNull CreatePatientProfileCommand command) {
+    public PatientDto assignPatientToUser(@NonNull Long userId, @NonNull AssignPatientToUserCommand command) {
         patientValidator.validateIdCardNoAvailability(command.idCardNo());
         User user = findUserByIdOrThrow(userId);
         patientValidator.validateUserDoesNotHavePatient(user);

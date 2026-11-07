@@ -1,7 +1,7 @@
 package com.vic8b.medicalclinic.controller;
 
+import com.vic8b.medicalclinic.command.patient.AssignPatientToUserCommand;
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
-import com.vic8b.medicalclinic.command.patient.CreatePatientProfileCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
@@ -63,7 +63,7 @@ public class PatientController {
         return patientService.addPatient(command);
     }
 
-    @Operation(summary = "Create patient profile for existing user")
+    @Operation(summary = "Assign patient profile to existing user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Patient profile for user created and assigned"),
             @ApiResponse(responseCode = "400", description = "Invalid request",
@@ -77,10 +77,10 @@ public class PatientController {
                     """,
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))})
     })
-    @PostMapping("/users/{userId}")
+    @PostMapping("/assign/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public PatientDto createPatientProfile(@PathVariable Long userId, @Valid @RequestBody CreatePatientProfileCommand command) {
-        return patientService.createPatientProfile(userId, command);
+    public PatientDto assignPatientToUser(@PathVariable Long userId, @Valid @RequestBody AssignPatientToUserCommand command) {
+        return patientService.assignPatientToUser(userId, command);
     }
 
     @Operation(summary = "Update patient profile")

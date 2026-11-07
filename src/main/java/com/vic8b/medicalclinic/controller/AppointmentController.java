@@ -42,7 +42,7 @@ public class AppointmentController {
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class)))
     })
     @GetMapping("/{appointmentId}")
-    public AppointmentDto getAppointmentsById(@PathVariable Long appointmentId) {
+    public AppointmentDto getAppointmentById(@PathVariable Long appointmentId) {
         return appointmentService.getAppointmentById(appointmentId);
     }
 
@@ -121,7 +121,7 @@ public class AppointmentController {
             @ApiResponse(responseCode = "404", description = "Appointment not found",
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))}),
     })
-    @PatchMapping("/cancel/{appointmentId}")
+    @PatchMapping("/{appointmentId}/cancel")
     public void cancelAppointment(@PathVariable Long appointmentId) {
         appointmentService.cancelAppointmentById(appointmentId);
     }

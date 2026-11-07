@@ -10,31 +10,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class AppointmentValidator {
     private final AppointmentRepository appointmentRepository;
 
-    public void validateDoctorAvailability(Doctor doctor, LocalDateTime startTime, LocalDateTime endtime) {
-        List<Appointment> doctorAppointments = appointmentRepository.findAllByDoctor(doctor);
-        for (Appointment appointment : doctorAppointments) {
-            if (isOverlapping(appointment, startTime, endtime)) {
-                throw new AppointmentAlreadyBookedException(appointment.getId());
-            }
+    public void validateDoctorAvailability(Doctor doctor, LocalDateTime startTime, LocalDateTime endTime) {
+        if (appointmentRepository.existsOverlappingAppointment(doctor, startTime, endTime)) {
+            throw new AppointmentAlreadyBookedException();
         }
     }
 
-    public void validateDoctorAvailabilityForUpdate(Doctor doctor, LocalDateTime startTime, LocalDateTime endtime,
-                                                    Long excludedAppointment) {
-        List<Appointment> doctorAppointments = appointmentRepository.findAllByDoctor(doctor).stream()
-                .filter(appointment -> !appointment.getId().equals(excludedAppointment))
-                .toList();
-        for (Appointment appointment : doctorAppointments) {
-            if (isOverlapping(appointment, startTime, endtime)) {
-                throw new AppointmentAlreadyBookedException(appointment.getId());
-            }
+    public void validateDoctorAvailabilityForUpdate(Doctor doctor, Long excludedAppointment, LocalDateTime startTime,
+                                                    LocalDateTime endtime) {
+        if (appointmentRepository.existsOverlappingAppointmentExcluding(doctor, excludedAppointment, startTime, endtime)) {
+            throw new AppointmentAlreadyBookedException();
         }
     }
 
@@ -51,9 +42,5 @@ public class AppointmentValidator {
         if (!appointment.getStartDateTime().isAfter(LocalDateTime.now())) {
             throw new PastAppointmentException(appointment.getId());
         }
-    }
-
-    public boolean isOverlapping(Appointment appointment, LocalDateTime startTime, LocalDateTime endtime) {
-        return startTime.isBefore(appointment.getEndDateTime()) && endtime.isAfter(appointment.getStartDateTime());
     }
 }

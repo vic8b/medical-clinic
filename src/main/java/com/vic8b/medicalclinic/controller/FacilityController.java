@@ -2,7 +2,7 @@ package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.command.facility.CreateFacilityCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
-import com.vic8b.medicalclinic.dto.doctor.FacilityDoctorDto;
+import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
 import com.vic8b.medicalclinic.dto.facility.FacilityDto;
 import com.vic8b.medicalclinic.service.FacilityService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Set;
 
 @Tag(name = "Facilities", description = "Facilities management endpoints")
@@ -26,11 +25,11 @@ import java.util.Set;
 public class FacilityController {
     private final FacilityService facilityService;
 
-    @Operation(summary = "Get all facilities")
-    @ApiResponse(responseCode = "200", description = "Returned all facilities")
+    @Operation(summary = "Get facilities, optionally filtered by doctor")
+    @ApiResponse(responseCode = "200", description = "Returned facilities")
     @GetMapping
-    public List<FacilityDto> getFacilities() {
-        return facilityService.getFacilities();
+    public Set<FacilityDto> getFacilities(@RequestParam(required = false) Long doctorId) {
+        return facilityService.getFacilities(doctorId);
     }
 
     @Operation(summary = "Get a facility by id")
@@ -44,14 +43,14 @@ public class FacilityController {
         return facilityService.getFacilityById(facilityId);
     }
 
-    @Operation(summary = "Get doctor assigned to a facility")
+    @Operation(summary = "Get doctors assigned to a facility")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Returned all assigned doctors"),
             @ApiResponse(responseCode = "404", description = "Facility not found",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class)))
     })
     @GetMapping("/{facilityId}/doctors")
-    public Set<FacilityDoctorDto> getDoctorsForFacility(@PathVariable Long facilityId) {
+    public Set<DoctorDto> getDoctorsForFacility(@PathVariable Long facilityId) {
         return facilityService.getDoctors(facilityId);
     }
 

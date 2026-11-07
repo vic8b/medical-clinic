@@ -54,7 +54,7 @@ public class AppointmentService {
         if (!doctor.equals(assignedDoctor)) {
             assignedDoctor.removeAppointment(appointment);
         }
-        validator.validateDoctorAvailabilityForUpdate(doctor, command.startDateTime(), command.endDateTime(), id);
+        validator.validateDoctorAvailabilityForUpdate(doctor, id, command.startDateTime(), command.endDateTime());
         appointment.update(command.startDateTime(), command.endDateTime(), doctor);
         appointment.assignDoctor(doctor);
         appointmentRepository.save(appointment);

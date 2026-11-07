@@ -6,6 +6,6 @@ import jakarta.validation.constraints.PastOrPresent;
 
 import java.time.LocalDate;
 
-public record CreatePatientProfileCommand(@NotBlank String idCardNo, @NotBlank String phoneNumber,
-                                          @NotNull @PastOrPresent LocalDate birthday) {
+public record AssignPatientToUserCommand(@NotBlank String idCardNo, @NotBlank String phoneNumber,
+                                         @NotNull @PastOrPresent LocalDate birthday) {
 }

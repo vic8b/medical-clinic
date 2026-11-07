@@ -1,13 +1,12 @@
 package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.facility.CreateFacilityCommand;
-import com.vic8b.medicalclinic.dto.doctor.FacilityDoctorDto;
+import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
 import com.vic8b.medicalclinic.dto.facility.FacilityDto;
 import com.vic8b.medicalclinic.exception.facility.FacilityAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.facility.FacilityNotFoundException;
 import com.vic8b.medicalclinic.mapper.DoctorMapper;
 import com.vic8b.medicalclinic.mapper.FacilityMapper;
-import com.vic8b.medicalclinic.model.Doctor;
 import com.vic8b.medicalclinic.model.Facility;
 import com.vic8b.medicalclinic.repository.FacilityRepository;
 import jakarta.transaction.Transactional;
@@ -15,7 +14,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,17 +43,21 @@ public class FacilityService {
         return facilityMapper.toDto(facility);
     }
 
-    public List<FacilityDto> getFacilities() {
+    public Set<FacilityDto> getFacilities(Long doctorId) {
+        if (doctorId != null) {
+            return facilityRepository.findByDoctorsId(doctorId).stream()
+                    .map(facilityMapper::toDto)
+                    .collect(Collectors.toSet());
+        }
         return facilityRepository.findAll().stream()
                 .map(facilityMapper::toDto)
-                .toList();
+                .collect(Collectors.toSet());
     }
 
-    public Set<FacilityDoctorDto> getDoctors(@NonNull Long facilityId) {
+    public Set<DoctorDto> getDoctors(@NonNull Long facilityId) {
         Facility facility = findFacilityByIdOrThrow(facilityId);
-        Set<Doctor> doctors = facility.getDoctors();
-        return doctors.stream()
-                .map(doctorMapper::toFacilityDto)
+        return facility.getDoctors().stream()
+                .map(doctorMapper::toDtoWithoutFacilities)
                 .collect(Collectors.toSet());
     }
 

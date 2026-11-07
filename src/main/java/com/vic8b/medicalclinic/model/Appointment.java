@@ -36,7 +36,7 @@ public class Appointment {
 
     public void assignPatient(@NonNull Patient patient) {
         if (!isAvailable()) {
-            throw new AppointmentAlreadyBookedException(id);
+            throw new AppointmentAlreadyBookedException();
         }
         this.patient = patient;
         patient.addAppointment(this);
