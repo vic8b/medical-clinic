@@ -2,7 +2,6 @@ package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.command.facility.CreateFacilityCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
-import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
 import com.vic8b.medicalclinic.dto.facility.FacilityDto;
 import com.vic8b.medicalclinic.service.FacilityService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,17 +40,6 @@ public class FacilityController {
     @GetMapping("/{facilityId}")
     public FacilityDto getFacilityById(@PathVariable Long facilityId) {
         return facilityService.getFacilityById(facilityId);
-    }
-
-    @Operation(summary = "Get doctors assigned to a facility")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Returned all assigned doctors"),
-            @ApiResponse(responseCode = "404", description = "Facility not found",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class)))
-    })
-    @GetMapping("/{facilityId}/doctors")
-    public Set<DoctorDto> getDoctorsForFacility(@PathVariable Long facilityId) {
-        return facilityService.getDoctors(facilityId);
     }
 
     @Operation(summary = "Create facility")

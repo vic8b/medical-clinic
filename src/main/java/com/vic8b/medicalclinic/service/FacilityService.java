@@ -1,11 +1,9 @@
 package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.facility.CreateFacilityCommand;
-import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
 import com.vic8b.medicalclinic.dto.facility.FacilityDto;
 import com.vic8b.medicalclinic.exception.facility.FacilityAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.facility.FacilityNotFoundException;
-import com.vic8b.medicalclinic.mapper.DoctorMapper;
 import com.vic8b.medicalclinic.mapper.FacilityMapper;
 import com.vic8b.medicalclinic.model.Facility;
 import com.vic8b.medicalclinic.repository.FacilityRepository;
@@ -22,7 +20,6 @@ import java.util.stream.Collectors;
 public class FacilityService {
     private final FacilityRepository facilityRepository;
     private final FacilityMapper facilityMapper;
-    private final DoctorMapper doctorMapper;
 
     public FacilityDto addFacility(@NonNull CreateFacilityCommand command) {
         validateNameAvailability(command.name());
@@ -51,13 +48,6 @@ public class FacilityService {
         }
         return facilityRepository.findAll().stream()
                 .map(facilityMapper::toDto)
-                .collect(Collectors.toSet());
-    }
-
-    public Set<DoctorDto> getDoctors(@NonNull Long facilityId) {
-        Facility facility = findFacilityByIdOrThrow(facilityId);
-        return facility.getDoctors().stream()
-                .map(doctorMapper::toDtoWithoutFacilities)
                 .collect(Collectors.toSet());
     }
 

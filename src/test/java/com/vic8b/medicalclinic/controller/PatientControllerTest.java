@@ -1,11 +1,11 @@
 package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
-import com.vic8b.medicalclinic.command.user.CreateUserCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
 import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
 import com.vic8b.medicalclinic.exception.user.UserAlreadyHasPatientException;
+import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.service.PatientService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,9 +81,9 @@ class PatientControllerTest {
     @Test
     void addPatient_WithCorrectPatientCommand_AnsweredWithAddedPatient() throws Exception {
         // given
-        CreateUserCommand createUserCommand = new CreateUserCommand("username", "test@gmail.com", "pass1234", "Wiktor", "Test");
-        CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, "1234", "500500500", LocalDate.of(1999, 1, 1));
-        PatientDto patientDto = new PatientDto(createUserCommand.email(), createUserCommand.firstName(), createUserCommand.lastName(), createPatientCommand.phoneNumber(), createPatientCommand.birthday());
+        User user = new User("username", "test@gmail.com", "pass1234", "Wiktor", "Test");
+        CreatePatientCommand createPatientCommand = new CreatePatientCommand(1L , "1234", "500500500", LocalDate.of(1999, 1, 1));
+        PatientDto patientDto = new PatientDto(user.getEmail(), user.getFirstName(), user.getLastName(), createPatientCommand.phoneNumber(), createPatientCommand.birthday());
         when(patientService.addPatient(createPatientCommand)).thenReturn(patientDto);
 
         // when + then
@@ -146,8 +146,8 @@ class PatientControllerTest {
     void addPatient_WhenUserAlreadyHasPatient_AnsweredWithConflictStatus() throws Exception {
         // given
         String takenEmail = "takenEmail@gmail.com";
-        CreateUserCommand createUserCommand = new CreateUserCommand("username", takenEmail, "pass1234", "Wiktor", "Test");
-        CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, "1234", "500500500", LocalDate.of(1999, 1, 1));
+        User user = new User("username", takenEmail, "pass1234", "Wiktor", "Test");
+        CreatePatientCommand createPatientCommand = new CreatePatientCommand(1L, "1234", "500500500", LocalDate.of(1999, 1, 1));
         when(patientService.addPatient(createPatientCommand)).thenThrow(new UserAlreadyHasPatientException(1L));
 
         // when + then

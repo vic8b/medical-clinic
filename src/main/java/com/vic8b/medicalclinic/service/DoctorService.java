@@ -1,16 +1,13 @@
 package com.vic8b.medicalclinic.service;
 
-import com.vic8b.medicalclinic.command.doctor.AssignDoctorToUserCommand;
 import com.vic8b.medicalclinic.command.doctor.CreateDoctorCommand;
 import com.vic8b.medicalclinic.command.doctor.UpdateDoctorCommand;
-import com.vic8b.medicalclinic.command.user.CreateUserCommand;
-import com.vic8b.medicalclinic.dto.doctor.DoctorDetailsDto;
+import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
 import com.vic8b.medicalclinic.exception.doctor.DoctorNotFoundException;
 import com.vic8b.medicalclinic.exception.facility.FacilityNotFoundException;
 import com.vic8b.medicalclinic.exception.user.UserAlreadyHasDoctorException;
 import com.vic8b.medicalclinic.exception.user.UserNotFoundException;
 import com.vic8b.medicalclinic.mapper.DoctorMapper;
-import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.Doctor;
 import com.vic8b.medicalclinic.model.Facility;
 import com.vic8b.medicalclinic.model.User;
@@ -23,7 +20,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,13 +29,13 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final UserRepository userRepository;
     private final DoctorMapper doctorMapper;
-    private final UserMapper userMapper;
     private final UserValidator userValidator;
     private final FacilityRepository facilityRepository;
 
     @Transactional
-    public DoctorDetailsDto addDoctor(@NonNull CreateDoctorCommand createDoctorCommand) {
-        User user = createUser(createDoctorCommand.userCommand());
+    public DoctorDto addDoctor(@NonNull CreateDoctorCommand createDoctorCommand) {
+        User user = findUserByIdOrThrow(createDoctorCommand.userId());
+        validateUserDoesNotHaveDoctor(user);
         Doctor doctor = doctorMapper.toEntity(createDoctorCommand);
         doctor.assignUser(user);
         doctorRepository.save(doctor);
@@ -45,17 +43,7 @@ public class DoctorService {
     }
 
     @Transactional
-    public DoctorDetailsDto assignDoctorToUser(@NonNull Long userId, @NonNull AssignDoctorToUserCommand command) {
-        User user = findUserByIdOrThrow(userId);
-        Doctor doctor = doctorMapper.toEntity(command);
-        validateUserDoesNotHaveDoctor(user);
-        doctor.assignUser(user);
-        doctorRepository.save(doctor);
-        return doctorMapper.toDto(doctor);
-    }
-
-    @Transactional
-    public DoctorDetailsDto assignFacilityToDoctor(@NonNull Long doctorId, @NonNull Long facilityId) {
+    public DoctorDto assignFacilityToDoctor(@NonNull Long doctorId, @NonNull Long facilityId) {
         Doctor doctor = findDoctorByIdOrThrow(doctorId);
         Facility facility = findFacilityByIdOrThrow(facilityId);
         doctor.assignFacility(facility);
@@ -71,7 +59,7 @@ public class DoctorService {
     }
 
     @Transactional
-    public DoctorDetailsDto updateDoctor(@NonNull Long id, @NonNull UpdateDoctorCommand command) {
+    public DoctorDto updateDoctor(@NonNull Long id, @NonNull UpdateDoctorCommand command) {
         Doctor doctor = findDoctorByIdOrThrow(id);
         User user = doctor.getUser();
         userValidator.validateUpdatedUserAvailability(user, command.email(), command.username());
@@ -81,25 +69,24 @@ public class DoctorService {
         return doctorMapper.toDto(doctor);
     }
 
-    public DoctorDetailsDto getDoctorById(@NonNull Long id) {
+    public DoctorDto getDoctorById(@NonNull Long id) {
         return doctorMapper.toDto(findDoctorByIdOrThrow(id));
     }
 
-    public List<DoctorDetailsDto> getDoctors() {
+    public Set<DoctorDto> getDoctors(Long facilityId) {
+        if (facilityId != null) {
+            return doctorRepository.findByFacilitiesId(facilityId).stream()
+                    .map(doctorMapper::toDto)
+                    .collect(Collectors.toSet());
+        }
         return doctorRepository.findAll().stream()
                 .map(doctorMapper::toDto)
-                .toList();
+                .collect(Collectors.toSet());
     }
 
     private User findUserByIdOrThrow(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
-    }
-
-    private User createUser(CreateUserCommand createUserCommand) {
-        userValidator.validateUsernameAvailability(createUserCommand.username());
-        userValidator.validateEmailAvailability(createUserCommand.email());
-        return userRepository.save(userMapper.toEntity(createUserCommand));
     }
 
     private void validateUserDoesNotHaveDoctor(User user) {

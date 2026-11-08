@@ -3,9 +3,6 @@ package com.vic8b.medicalclinic.service;
 import com.vic8b.medicalclinic.command.appointment.CreateAppointmentCommand;
 import com.vic8b.medicalclinic.command.appointment.UpdateAppointmentCommand;
 import com.vic8b.medicalclinic.dto.appointment.AppointmentDto;
-import com.vic8b.medicalclinic.dto.appointment.AppointmentForDoctorDto;
-import com.vic8b.medicalclinic.dto.appointment.AppointmentForPatientDto;
-import com.vic8b.medicalclinic.dto.appointment.AvailableAppointmentDto;
 import com.vic8b.medicalclinic.exception.appointment.AppointmentNotFoundException;
 import com.vic8b.medicalclinic.exception.doctor.DoctorNotFoundException;
 import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
@@ -51,10 +48,10 @@ public class AppointmentService {
         Doctor assignedDoctor = appointment.getDoctor();
         Doctor doctor = findDoctorByIdOrThrow(command.doctorId());
         validator.validateStartTimeOfTheVisit(command.startDateTime(), command.endDateTime());
+        validator.validateDoctorAvailabilityForUpdate(doctor, id, command.startDateTime(), command.endDateTime());
         if (!doctor.equals(assignedDoctor)) {
             assignedDoctor.removeAppointment(appointment);
         }
-        validator.validateDoctorAvailabilityForUpdate(doctor, id, command.startDateTime(), command.endDateTime());
         appointment.update(command.startDateTime(), command.endDateTime(), doctor);
         appointment.assignDoctor(doctor);
         appointmentRepository.save(appointment);
@@ -88,29 +85,25 @@ public class AppointmentService {
         return appointmentMapper.toDto(findAppointmentByIdOrThrow(id));
     }
 
-    public List<AppointmentForDoctorDto> getAppointmentsForDoctor(@NonNull Long doctorId) {
-        Doctor doctor = findDoctorByIdOrThrow(doctorId);
-        return doctor.getAppointments().stream()
-                .map(appointmentMapper::toForDoctorDto)
-                .toList();
-    }
-
-    public List<AppointmentForPatientDto> getAppointmentsForPatient(@NonNull Long patientId) {
-        Patient patient = findPatientOrThrow(patientId);
-        return patient.getAppointments().stream()
-                .map(appointmentMapper::toForPatientDto)
-                .toList();
-    }
-
-    public List<AppointmentDto> getAppointments() {
-        return appointmentRepository.findAll().stream()
+    public List<AppointmentDto> getAppointments(Long doctorId, Long patientId) {
+        List<Appointment> appointments;
+        if (patientId != null && doctorId != null) {
+            appointments = appointmentRepository.findAllByDoctorIdAndPatientId(doctorId, patientId);
+        } else if (doctorId != null) {
+            appointments = appointmentRepository.findAllByDoctorId(doctorId);
+        } else if (patientId != null) {
+            appointments = appointmentRepository.findAllByPatientId(patientId);
+        } else {
+            appointments = appointmentRepository.findAll();
+        }
+        return appointments.stream()
                 .map(appointmentMapper::toDto)
                 .toList();
     }
 
-    public List<AvailableAppointmentDto> getAvailableAppointments() {
+    public List<AppointmentDto> getAvailableAppointments() {
         return appointmentRepository.findAllByPatientIsNullAndStartDateTimeAfter(LocalDateTime.now()).stream()
-                .map(appointmentMapper::toAvailableDto)
+                .map(appointmentMapper::toDto)
                 .toList();
     }
 

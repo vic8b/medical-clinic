@@ -1,14 +1,11 @@
 package com.vic8b.medicalclinic.service;
 
-import com.vic8b.medicalclinic.command.patient.AssignPatientToUserCommand;
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
-import com.vic8b.medicalclinic.command.user.CreateUserCommand;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
 import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
 import com.vic8b.medicalclinic.exception.user.UserNotFoundException;
 import com.vic8b.medicalclinic.mapper.PatientMapper;
-import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.Patient;
 import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.PatientRepository;
@@ -28,26 +25,15 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
     private final PatientMapper patientMapper;
-    private final UserMapper userMapper;
     private final PatientValidator patientValidator;
     private final UserValidator userValidator;
 
     @Transactional
     public PatientDto addPatient(@NonNull CreatePatientCommand createPatientCommand) {
-        patientValidator.validateIdCardNoAvailability(createPatientCommand.idCardNo());
-        User user = createUser(createPatientCommand.userCommand());
-        Patient patient = patientMapper.toEntity(createPatientCommand);
-        patient.assignUser(user);
-        patientRepository.save(patient);
-        return patientMapper.toDto(patient);
-    }
-
-    @Transactional
-    public PatientDto assignPatientToUser(@NonNull Long userId, @NonNull AssignPatientToUserCommand command) {
-        patientValidator.validateIdCardNoAvailability(command.idCardNo());
-        User user = findUserByIdOrThrow(userId);
+        User user = findUserByIdOrThrow(createPatientCommand.userId());
         patientValidator.validateUserDoesNotHavePatient(user);
-        Patient patient = patientMapper.toEntity(command);
+        patientValidator.validateIdCardNoAvailability(createPatientCommand.idCardNo());
+        Patient patient = patientMapper.toEntity(createPatientCommand);
         patient.assignUser(user);
         patientRepository.save(patient);
         return patientMapper.toDto(patient);
@@ -84,12 +70,6 @@ public class PatientService {
     private User findUserByIdOrThrow(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
-    }
-
-    private User createUser(CreateUserCommand createUserCommand) {
-        userValidator.validateUsernameAvailability(createUserCommand.username());
-        userValidator.validateEmailAvailability(createUserCommand.email());
-        return userRepository.save(userMapper.toEntity(createUserCommand));
     }
 
     private Patient findPatientByEmailOrThrow(String email) {

@@ -1,10 +1,9 @@
 package com.vic8b.medicalclinic.controller;
 
-import com.vic8b.medicalclinic.command.doctor.AssignDoctorToUserCommand;
 import com.vic8b.medicalclinic.command.doctor.CreateDoctorCommand;
 import com.vic8b.medicalclinic.command.doctor.UpdateDoctorCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
-import com.vic8b.medicalclinic.dto.doctor.DoctorDetailsDto;
+import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
 import com.vic8b.medicalclinic.service.DoctorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Set;
 
 @Tag(name = "Doctors", description = "Doctors management endpoints")
 @RestController
@@ -26,11 +25,11 @@ import java.util.List;
 public class DoctorController {
     private final DoctorService doctorService;
 
-    @Operation(summary = "Get all doctors")
+    @Operation(summary = "Get all doctors, optionally filtered by facility")
     @ApiResponse(responseCode = "200", description = "Returned all doctors")
     @GetMapping
-    public List<DoctorDetailsDto> getDoctors() {
-        return doctorService.getDoctors();
+    public Set<DoctorDto> getDoctors(@RequestParam(required = false) Long facilityId) {
+        return doctorService.getDoctors(facilityId);
     }
 
     @Operation(summary = "Get a doctor by id")
@@ -40,7 +39,7 @@ public class DoctorController {
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class)))
     })
     @GetMapping("/{doctorId}")
-    public DoctorDetailsDto getDoctorById(@PathVariable Long doctorId) {
+    public DoctorDto getDoctorById(@PathVariable Long doctorId) {
         return doctorService.getDoctorById(doctorId);
     }
 
@@ -49,36 +48,18 @@ public class DoctorController {
             @ApiResponse(responseCode = "201", description = "Doctor created"),
             @ApiResponse(responseCode = "400", description = "Invalid request",
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))}),
-            @ApiResponse(responseCode = "409", description = """
-                    Conflict - user already exists:
-                    - username is taken,
-                    - email is taken
-                    """,
-                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))})
-    })
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public DoctorDetailsDto addDoctor(@Valid @RequestBody CreateDoctorCommand command) {
-        return doctorService.addDoctor(command);
-    }
-
-    @Operation(summary = "Assign doctor profile to existing user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Doctor profile for user created and assigned"),
-            @ApiResponse(responseCode = "400", description = "Invalid request",
-                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))}),
             @ApiResponse(responseCode = "404", description = "User not found",
-                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))}),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))),
             @ApiResponse(responseCode = "409", description = """
                     Conflict:
                     - User already has an existing doctor profile
                     """,
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))})
     })
-    @PostMapping("/assign/{userId}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public DoctorDetailsDto assignDoctorToUser(@PathVariable Long userId, @Valid @RequestBody AssignDoctorToUserCommand command) {
-        return doctorService.assignDoctorToUser(userId, command);
+    public DoctorDto addDoctor(@Valid @RequestBody CreateDoctorCommand command) {
+        return doctorService.addDoctor(command);
     }
 
     @Operation(summary = "Update doctor profile")
@@ -92,7 +73,7 @@ public class DoctorController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))})
     })
     @PutMapping("/{doctorId}")
-    public DoctorDetailsDto updateDoctor(@PathVariable Long doctorId, @Valid @RequestBody UpdateDoctorCommand command) {
+    public DoctorDto updateDoctor(@PathVariable Long doctorId, @Valid @RequestBody UpdateDoctorCommand command) {
         return doctorService.updateDoctor(doctorId, command);
     }
 
@@ -103,7 +84,7 @@ public class DoctorController {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))})
     })
     @PutMapping("/{doctorId}/facilities/{facilityId}")
-    public DoctorDetailsDto assignFacilityToDoctor(@PathVariable Long doctorId, @PathVariable Long facilityId) {
+    public DoctorDto assignFacilityToDoctor(@PathVariable Long doctorId, @PathVariable Long facilityId) {
         return doctorService.assignFacilityToDoctor(doctorId, facilityId);
     }
 

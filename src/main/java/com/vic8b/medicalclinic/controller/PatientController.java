@@ -1,6 +1,5 @@
 package com.vic8b.medicalclinic.controller;
 
-import com.vic8b.medicalclinic.command.patient.AssignPatientToUserCommand;
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
@@ -49,27 +48,8 @@ public class PatientController {
             @ApiResponse(responseCode = "201", description = "Patient created"),
             @ApiResponse(responseCode = "400", description = "Invalid request",
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))}),
-            @ApiResponse(responseCode = "409", description = """
-                    Conflict:
-                    - ID Card No is taken,
-                    - username is taken,
-                    - email is taken
-                    """,
-                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))})
-    })
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public PatientDto addPatient(@Valid @RequestBody CreatePatientCommand command) {
-        return patientService.addPatient(command);
-    }
-
-    @Operation(summary = "Assign patient profile to existing user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Patient profile for user created and assigned"),
-            @ApiResponse(responseCode = "400", description = "Invalid request",
-                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))}),
             @ApiResponse(responseCode = "404", description = "User not found",
-                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))}),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))),
             @ApiResponse(responseCode = "409", description = """
                     Conflict:
                     - ID Card No is taken,
@@ -77,10 +57,10 @@ public class PatientController {
                     """,
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class))})
     })
-    @PostMapping("/assign/{userId}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PatientDto assignPatientToUser(@PathVariable Long userId, @Valid @RequestBody AssignPatientToUserCommand command) {
-        return patientService.assignPatientToUser(userId, command);
+    public PatientDto addPatient(@Valid @RequestBody CreatePatientCommand command) {
+        return patientService.addPatient(command);
     }
 
     @Operation(summary = "Update patient profile")

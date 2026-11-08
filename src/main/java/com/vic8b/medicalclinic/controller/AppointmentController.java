@@ -4,9 +4,6 @@ import com.vic8b.medicalclinic.command.appointment.CreateAppointmentCommand;
 import com.vic8b.medicalclinic.command.appointment.UpdateAppointmentCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
 import com.vic8b.medicalclinic.dto.appointment.AppointmentDto;
-import com.vic8b.medicalclinic.dto.appointment.AppointmentForDoctorDto;
-import com.vic8b.medicalclinic.dto.appointment.AppointmentForPatientDto;
-import com.vic8b.medicalclinic.dto.appointment.AvailableAppointmentDto;
 import com.vic8b.medicalclinic.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,11 +25,12 @@ import java.util.List;
 public class AppointmentController {
     private final AppointmentService appointmentService;
 
-    @Operation(summary = "Get all appointments")
+    @Operation(summary = "Get all appointments, optionally filtered by doctor and patient")
     @ApiResponse(responseCode = "200", description = "Returned all appointments")
     @GetMapping
-    public List<AppointmentDto> getAppointments() {
-        return appointmentService.getAppointments();
+    public List<AppointmentDto> getAppointments(@RequestParam(required = false) Long doctorId,
+                                                @RequestParam(required = false) Long patientId) {
+        return appointmentService.getAppointments(doctorId, patientId);
     }
 
     @Operation(summary = "Get an appointment by id")
@@ -46,32 +44,10 @@ public class AppointmentController {
         return appointmentService.getAppointmentById(appointmentId);
     }
 
-    @Operation(summary = "Get appointments for a doctor")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Appointments found"),
-            @ApiResponse(responseCode = "404", description = "Doctor not found",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class)))
-    })
-    @GetMapping("/doctor/{doctorId}")
-    public List<AppointmentForDoctorDto> getAppointmentsForDoctor(@PathVariable Long doctorId) {
-        return appointmentService.getAppointmentsForDoctor(doctorId);
-    }
-
-    @Operation(summary = "Get appointments for a patient")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Appointments found"),
-            @ApiResponse(responseCode = "404", description = "Patient not found",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessageDto.class)))
-    })
-    @GetMapping("/patient/{patientId}")
-    public List<AppointmentForPatientDto> getAppointmentsForPatient(@PathVariable Long patientId) {
-        return appointmentService.getAppointmentsForPatient(patientId);
-    }
-
     @Operation(summary = "Get all available appointments")
     @ApiResponse(responseCode = "200", description = "Returned all available appointments")
     @GetMapping("/available")
-    public List<AvailableAppointmentDto> getAvailableAppointments() {
+    public List<AppointmentDto> getAvailableAppointments() {
         return appointmentService.getAvailableAppointments();
     }
 

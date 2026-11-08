@@ -1,13 +1,11 @@
 package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
-import com.vic8b.medicalclinic.command.user.CreateUserCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
 import com.vic8b.medicalclinic.exception.patient.PatientAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
 import com.vic8b.medicalclinic.mapper.PatientMapper;
-import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.Patient;
 import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.PatientRepository;
@@ -36,31 +34,27 @@ class PatientServiceTest {
     PatientRepository patientRepository;
     UserRepository userRepository;
     PatientMapper patientMapper;
-    UserMapper userMapper;
-    PatientService patientService;
     PatientValidator patientValidator;
     UserValidator userValidator;
+    PatientService patientService;
 
     @BeforeEach
     void setup() {
         patientRepository = Mockito.mock(PatientRepository.class);
         userRepository = Mockito.mock(UserRepository.class);
         patientMapper = Mappers.getMapper(PatientMapper.class);
-        userMapper = Mappers.getMapper(UserMapper.class);
         patientValidator = Mockito.mock(PatientValidator.class);
         userValidator = Mockito.mock(UserValidator.class);
-        patientService = new PatientService(patientRepository, userRepository, patientMapper, userMapper, patientValidator, userValidator);
+        patientService = new PatientService(patientRepository, userRepository, patientMapper, patientValidator, userValidator);
     }
 
     @Test
     void addPatient_WithCorrectCommand_ReturnedPatientDto() {
         // given
-        CreateUserCommand createUserCommand = new CreateUserCommand("username", "test@gmail.com", "pass1234", "Wiktor", "Test");
-        CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, "1234", "500500500", LocalDate.of(1999, 1, 1));
-        User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor")
-                .lastName("Test").build();
-        when(userRepository.save(any(User.class)))
-                .thenReturn(user);
+        Long userId = 1L;
+        CreatePatientCommand createPatientCommand = new CreatePatientCommand(userId, "1234", "500500500", LocalDate.of(1999, 1, 1));
+        User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor").lastName("Test").build();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // when
         PatientDto patientDto = patientService.addPatient(createPatientCommand);
@@ -170,11 +164,13 @@ class PatientServiceTest {
     void addPatient_WithExistingIdCardNo_ThrownPatientAlreadyExistsException() {
         // given
         String existingIdCardNo = "ABC123456";
-        CreateUserCommand createUserCommand = new CreateUserCommand("username", "test@gmail.com", "pass1234", "Wiktor", "Test");
-        CreatePatientCommand createPatientCommand = new CreatePatientCommand(createUserCommand, existingIdCardNo, "500500500", LocalDate.of(1999, 1, 1));
+        Long userId = 1L;
+        CreatePatientCommand createPatientCommand = new CreatePatientCommand(userId, existingIdCardNo, "500500500", LocalDate.of(1999, 1, 1));
+        User user = User.builder().username("username").email("test@gmail.com").password("pass1234").firstName("Wiktor").lastName("Test").build();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         doThrow(PatientAlreadyExistsException.byCardIdNo(existingIdCardNo))
                 .when(patientValidator)
-                .validateIdCardNoAvailability(createPatientCommand.idCardNo());
+                .validateIdCardNoAvailability("ABC123456");
 
         // when + then
         assertThatThrownBy(() -> patientService.addPatient(createPatientCommand))

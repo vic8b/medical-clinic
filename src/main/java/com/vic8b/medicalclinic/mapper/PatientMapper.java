@@ -1,6 +1,5 @@
 package com.vic8b.medicalclinic.mapper;
 
-import com.vic8b.medicalclinic.command.patient.AssignPatientToUserCommand;
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
 import com.vic8b.medicalclinic.model.Patient;
@@ -14,5 +13,4 @@ public interface PatientMapper {
     @Mapping(target = "lastName", source = "user.lastName")
     PatientDto toDto(Patient patient);
     Patient toEntity(CreatePatientCommand command);
-    Patient toEntity(AssignPatientToUserCommand command);
 }
