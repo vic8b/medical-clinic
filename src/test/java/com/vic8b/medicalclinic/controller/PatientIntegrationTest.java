@@ -42,27 +42,24 @@ class PatientIntegrationTest {
     void addPatient_WithExistingIdCardNo_AnsweredWithStatusConflict() throws Exception {
         // given
         String existingIdCardNo = "ABC123456";
-        User user = User.builder().username("existingUsername").email("existing@gmail.com").password("pass1234").firstName("Wiktor")
+        User existingPatientUser = User.builder().username("existingUsername").email("existing@gmail.com").password("pass1234").firstName("Wiktor")
                 .lastName("Test").build();
-        userRepository.save(user);
-        Patient patient = Patient.builder().idCardNo(existingIdCardNo).phoneNumber("500500500")
+        userRepository.save(existingPatientUser);
+        Patient existingPatient = Patient.builder().idCardNo(existingIdCardNo).phoneNumber("500500500")
                 .birthday(LocalDate.of(1999, 1, 1)).build();
-        patient.assignUser(user);
-        patientRepository.save(patient);
+        existingPatient.assignUser(existingPatientUser);
+        patientRepository.save(existingPatient);
+        User targetUser = User.builder().username("targetUser").email("target@gmail.com").password("pass1234").firstName("Target")
+                .lastName("User").build();
+        userRepository.save(targetUser);
         String addRequest = """
                 {
-                    "userCommand": {
-                        "username": "username",
-                        "email": "test@gmail.com",
-                        "password": "pass1234",
-                        "firstName": "Wiktor",
-                        "lastName": "Test"
-                      },
+                    "userId": %d,
                     "idCardNo": "ABC123456",
-                    "phoneNumber": "500500500",
-                    "birthday": "1999-01-01"
+                    "phoneNumber": "600600600",
+                    "birthday": "2000-01-01"
                 }
-                """;
+                """.formatted(targetUser.getId());
 
         // when + then
         mvc.perform(post("/patients")
@@ -77,13 +74,7 @@ class PatientIntegrationTest {
         // given
         String addRequestWithNullField = """
                 {
-                    "userCommand": {
-                        "username": "username",
-                        "email": "test@gmail.com",
-                        "password": "pass1234",
-                        "firstName": "Wiktor",
-                        "lastName": "Test"
-                      },
+                    "userId": 1,
                     "idCardNo": null,
                     "phoneNumber": "500500500",
                     "birthday": "1999-01-01"

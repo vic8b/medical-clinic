@@ -1,18 +1,13 @@
 package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.doctor.CreateDoctorCommand;
-import com.vic8b.medicalclinic.command.doctor.CreateDoctorProfileCommand;
 import com.vic8b.medicalclinic.command.doctor.UpdateDoctorCommand;
-import com.vic8b.medicalclinic.command.user.CreateUserCommand;
-import com.vic8b.medicalclinic.dto.DoctorDto;
-import com.vic8b.medicalclinic.dto.FacilityDto;
+import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
 import com.vic8b.medicalclinic.exception.doctor.DoctorNotFoundException;
 import com.vic8b.medicalclinic.exception.facility.FacilityNotFoundException;
 import com.vic8b.medicalclinic.exception.user.UserAlreadyHasDoctorException;
 import com.vic8b.medicalclinic.exception.user.UserNotFoundException;
 import com.vic8b.medicalclinic.mapper.DoctorMapper;
-import com.vic8b.medicalclinic.mapper.FacilityMapper;
-import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.Doctor;
 import com.vic8b.medicalclinic.model.Facility;
 import com.vic8b.medicalclinic.model.User;
@@ -25,7 +20,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,25 +29,14 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final UserRepository userRepository;
     private final DoctorMapper doctorMapper;
-    private final UserMapper userMapper;
     private final UserValidator userValidator;
     private final FacilityRepository facilityRepository;
-    private final FacilityMapper facilityMapper;
 
     @Transactional
     public DoctorDto addDoctor(@NonNull CreateDoctorCommand createDoctorCommand) {
-        User user = createUser(createDoctorCommand.userCommand());
-        Doctor doctor = doctorMapper.toEntity(createDoctorCommand);
-        doctor.assignUser(user);
-        doctorRepository.save(doctor);
-        return doctorMapper.toDto(doctor);
-    }
-
-    @Transactional
-    public DoctorDto createDoctorProfile(@NonNull Long userId, @NonNull CreateDoctorProfileCommand command) {
-        User user = findUserByIdOrThrow(userId);
-        Doctor doctor = doctorMapper.toEntity(command);
+        User user = findUserByIdOrThrow(createDoctorCommand.userId());
         validateUserDoesNotHaveDoctor(user);
+        Doctor doctor = doctorMapper.toEntity(createDoctorCommand);
         doctor.assignUser(user);
         doctorRepository.save(doctor);
         return doctorMapper.toDto(doctor);
@@ -90,17 +73,14 @@ public class DoctorService {
         return doctorMapper.toDto(findDoctorByIdOrThrow(id));
     }
 
-    public List<DoctorDto> getDoctors() {
+    public Set<DoctorDto> getDoctors(Long facilityId) {
+        if (facilityId != null) {
+            return doctorRepository.findByFacilitiesId(facilityId).stream()
+                    .map(doctorMapper::toDto)
+                    .collect(Collectors.toSet());
+        }
         return doctorRepository.findAll().stream()
                 .map(doctorMapper::toDto)
-                .toList();
-    }
-
-    public Set<FacilityDto> getFacilities(@NonNull Long doctorId) {
-        Doctor doctor = findDoctorByIdOrThrow(doctorId);
-        Set<Facility> facilities = doctor.getFacilities();
-        return facilities.stream()
-                .map(facilityMapper::toDto)
                 .collect(Collectors.toSet());
     }
 
@@ -109,13 +89,7 @@ public class DoctorService {
                 .orElseThrow(() -> new UserNotFoundException(id));
     }
 
-    private User createUser(CreateUserCommand createUserCommand) {
-        userValidator.validateUsernameAvailability(createUserCommand.username());
-        userValidator.validateEmailAvailability(createUserCommand.email());
-        return userRepository.save(userMapper.toEntity(createUserCommand));
-    }
-
-    public void validateUserDoesNotHaveDoctor(User user) {
+    private void validateUserDoesNotHaveDoctor(User user) {
         if (user.getDoctor() != null) {
             throw new UserAlreadyHasDoctorException(user.getId());
         }

@@ -3,6 +3,7 @@ package com.vic8b.medicalclinic.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -28,6 +29,8 @@ public class Doctor {
             inverseJoinColumns = @JoinColumn(name = "facility_id")
     )
     private Set<Facility> facilities;
+    @OneToMany(mappedBy = "doctor")
+    private List<Appointment> appointments;
 
     public void update(@NonNull String specialization) {
         this.specialization = specialization;
@@ -46,5 +49,15 @@ public class Doctor {
     public void removeFacility(Facility facility) {
         facilities.remove(facility);
         facility.removeDoctor(this);
+    }
+
+    public void addAppointment(Appointment appointment) {
+        if (!appointments.contains(appointment)) {
+            appointments.add(appointment);
+        }
+    }
+
+    public void removeAppointment(Appointment appointment) {
+        appointments.remove(appointment);
     }
 }

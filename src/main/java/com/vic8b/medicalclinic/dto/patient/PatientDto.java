@@ -1,4 +1,4 @@
-package com.vic8b.medicalclinic.dto;
+package com.vic8b.medicalclinic.dto.patient;
 
 import java.time.LocalDate;
 
