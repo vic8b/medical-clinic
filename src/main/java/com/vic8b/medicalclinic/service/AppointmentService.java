@@ -68,7 +68,7 @@ public class AppointmentService {
     @Transactional
     public AppointmentDto assignPatient(@NonNull Long appointmentId, @NonNull Long patientId) {
         Appointment appointment = findAppointmentByIdOrThrow(appointmentId);
-        Patient patient = findPatientOrThrow(patientId);
+        Patient patient = findPatientByIdOrThrow(patientId);
         validator.validateAppointmentIsNotInPast(appointment);
         appointment.assignPatient(patient);
         appointmentRepository.save(appointment);
@@ -86,17 +86,7 @@ public class AppointmentService {
     }
 
     public List<AppointmentDto> getAppointments(Long doctorId, Long patientId) {
-        List<Appointment> appointments;
-        if (patientId != null && doctorId != null) {
-            appointments = appointmentRepository.findAllByDoctorIdAndPatientId(doctorId, patientId);
-        } else if (doctorId != null) {
-            appointments = appointmentRepository.findAllByDoctorId(doctorId);
-        } else if (patientId != null) {
-            appointments = appointmentRepository.findAllByPatientId(patientId);
-        } else {
-            appointments = appointmentRepository.findAll();
-        }
-        return appointments.stream()
+        return findAppointments(doctorId, patientId).stream()
                 .map(appointmentMapper::toDto)
                 .toList();
     }
@@ -117,8 +107,21 @@ public class AppointmentService {
                 .orElseThrow(() -> new DoctorNotFoundException(id));
     }
 
-    private Patient findPatientOrThrow(Long patientId) {
+    private Patient findPatientByIdOrThrow(Long patientId) {
         return patientRepository.findById(patientId)
                 .orElseThrow(() -> new PatientNotFoundException(patientId));
+    }
+
+    private List<Appointment> findAppointments(Long doctorId, Long patientId) {
+        if (patientId != null && doctorId != null) {
+            return appointmentRepository.findAllByDoctorIdAndPatientId(doctorId, patientId);
+        }
+        if (doctorId != null) {
+            return appointmentRepository.findAllByDoctorId(doctorId);
+        }
+        if (patientId != null) {
+            return appointmentRepository.findAllByPatientId(patientId);
+        }
+        return appointmentRepository.findAll();
     }
 }
