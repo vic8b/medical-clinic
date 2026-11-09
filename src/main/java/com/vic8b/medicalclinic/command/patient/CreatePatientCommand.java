@@ -1,5 +1,6 @@
-package com.vic8b.medicalclinic.command;
+package com.vic8b.medicalclinic.command.patient;
 
+import com.vic8b.medicalclinic.command.user.CreateUserCommand;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

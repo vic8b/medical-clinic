@@ -1,12 +1,12 @@
 package com.vic8b.medicalclinic.service;
 
-import com.vic8b.medicalclinic.command.CreatePatientCommand;
-import com.vic8b.medicalclinic.command.CreatePatientProfileCommand;
-import com.vic8b.medicalclinic.command.CreateUserCommand;
-import com.vic8b.medicalclinic.command.UpdatePatientCommand;
+import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
+import com.vic8b.medicalclinic.command.patient.CreatePatientProfileCommand;
+import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
+import com.vic8b.medicalclinic.command.user.CreateUserCommand;
 import com.vic8b.medicalclinic.dto.PatientDto;
-import com.vic8b.medicalclinic.exception.PatientNotFoundException;
-import com.vic8b.medicalclinic.exception.UserNotFoundException;
+import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
+import com.vic8b.medicalclinic.exception.user.UserNotFoundException;
 import com.vic8b.medicalclinic.mapper.PatientMapper;
 import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.Patient;

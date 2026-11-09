@@ -1,7 +1,7 @@
 package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.command.ChangePasswordCommand;
-import com.vic8b.medicalclinic.command.CreateUserCommand;
+import com.vic8b.medicalclinic.command.user.CreateUserCommand;
 import com.vic8b.medicalclinic.dto.UserDto;
 import com.vic8b.medicalclinic.service.UserService;
 import jakarta.validation.Valid;

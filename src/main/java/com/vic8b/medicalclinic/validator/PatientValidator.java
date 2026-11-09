@@ -1,7 +1,7 @@
 package com.vic8b.medicalclinic.validator;
 
-import com.vic8b.medicalclinic.exception.PatientAlreadyExistsException;
-import com.vic8b.medicalclinic.exception.UserAlreadyHasPatientException;
+import com.vic8b.medicalclinic.exception.patient.PatientAlreadyExistsException;
+import com.vic8b.medicalclinic.exception.user.UserAlreadyHasPatientException;
 import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;

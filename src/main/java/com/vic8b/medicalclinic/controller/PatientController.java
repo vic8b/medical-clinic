@@ -1,8 +1,8 @@
 package com.vic8b.medicalclinic.controller;
 
-import com.vic8b.medicalclinic.command.CreatePatientCommand;
-import com.vic8b.medicalclinic.command.CreatePatientProfileCommand;
-import com.vic8b.medicalclinic.command.UpdatePatientCommand;
+import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
+import com.vic8b.medicalclinic.command.patient.CreatePatientProfileCommand;
+import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.PatientDto;
 import com.vic8b.medicalclinic.service.PatientService;
 import jakarta.validation.Valid;

@@ -1,10 +1,11 @@
 package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.ChangePasswordCommand;
-import com.vic8b.medicalclinic.command.CreateUserCommand;
+import com.vic8b.medicalclinic.command.user.CreateUserCommand;
 import com.vic8b.medicalclinic.dto.UserDto;
-import com.vic8b.medicalclinic.exception.UserHasAssignedPatientException;
-import com.vic8b.medicalclinic.exception.UserNotFoundException;
+import com.vic8b.medicalclinic.exception.user.UserHasAssignedDoctorException;
+import com.vic8b.medicalclinic.exception.user.UserHasAssignedPatientException;
+import com.vic8b.medicalclinic.exception.user.UserNotFoundException;
 import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.UserRepository;
@@ -37,6 +38,9 @@ public class UserService {
         User user = findUserOrThrow(id);
         if (user.getPatient() != null) {
             throw new UserHasAssignedPatientException(id);
+        }
+        if (user.getDoctor() != null) {
+            throw new UserHasAssignedDoctorException(id);
         }
         userRepository.delete(user);
     }

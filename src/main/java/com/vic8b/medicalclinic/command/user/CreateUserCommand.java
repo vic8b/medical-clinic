@@ -1,4 +1,4 @@
-package com.vic8b.medicalclinic.command;
+package com.vic8b.medicalclinic.command.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
