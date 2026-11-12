@@ -22,8 +22,8 @@ public class Patient {
     private String phoneNumber;
     @Column(nullable = false)
     private LocalDate birthday;
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
     private User user;
     @OneToMany(mappedBy = "patient")
     private List<Appointment> appointments;

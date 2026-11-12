@@ -12,10 +12,10 @@ import com.vic8b.medicalclinic.repository.PatientRepository;
 import com.vic8b.medicalclinic.repository.UserRepository;
 import com.vic8b.medicalclinic.validator.PatientValidator;
 import com.vic8b.medicalclinic.validator.UserValidator;
-import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 

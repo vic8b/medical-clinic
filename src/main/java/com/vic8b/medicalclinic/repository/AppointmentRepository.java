@@ -34,4 +34,5 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     boolean existsOverlappingAppointmentExcluding(@Param("doctor") Doctor doctor, @Param("appointmentId") Long appointmentId,
                                                   @Param("startDateTime") LocalDateTime startDateTime,
                                                   @Param("endDateTime") LocalDateTime endDateTime);
+    boolean existsByDoctorId(Long doctorId);
 }

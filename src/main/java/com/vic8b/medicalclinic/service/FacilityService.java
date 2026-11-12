@@ -7,10 +7,10 @@ import com.vic8b.medicalclinic.exception.facility.FacilityNotFoundException;
 import com.vic8b.medicalclinic.mapper.FacilityMapper;
 import com.vic8b.medicalclinic.model.Facility;
 import com.vic8b.medicalclinic.repository.FacilityRepository;
-import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,6 +21,7 @@ public class FacilityService {
     private final FacilityRepository facilityRepository;
     private final FacilityMapper facilityMapper;
 
+    @Transactional
     public FacilityDto addFacility(@NonNull CreateFacilityCommand command) {
         validateNameAvailability(command.name());
         Facility facility = facilityMapper.toEntity(command);

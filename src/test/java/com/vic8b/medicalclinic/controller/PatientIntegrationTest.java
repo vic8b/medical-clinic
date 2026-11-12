@@ -119,12 +119,13 @@ class PatientIntegrationTest {
                         .content(updateRequest))
                 .andExpect(status().isOk());
         Patient updatedPatient = patientRepository.findByUserEmailIgnoreCase("updatedEmail@gmail.com").orElseThrow();
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
         assertAll(
                 () -> assertThat(updatedPatient.getIdCardNo()).isEqualTo(originalIdCardNo),
-                () -> assertThat(updatedPatient.getUser().getUsername()).isEqualTo("updatedUsername"),
-                () -> assertThat(updatedPatient.getUser().getEmail()).isEqualTo("updatedEmail@gmail.com"),
-                () -> assertThat(updatedPatient.getUser().getFirstName()).isEqualTo("Andrew"),
-                () -> assertThat(updatedPatient.getUser().getLastName()).isEqualTo("Kowalski"),
+                () -> assertThat(updatedUser.getUsername()).isEqualTo("updatedUsername"),
+                () -> assertThat(updatedUser.getEmail()).isEqualTo("updatedEmail@gmail.com"),
+                () -> assertThat(updatedUser.getFirstName()).isEqualTo("Andrew"),
+                () -> assertThat(updatedUser.getLastName()).isEqualTo("Kowalski"),
                 () -> assertThat(updatedPatient.getPhoneNumber()).isEqualTo("999999999"),
                 () -> assertThat(updatedPatient.getBirthday()).isEqualTo(LocalDate.of(1990, 1, 1))
         );
@@ -158,11 +159,12 @@ class PatientIntegrationTest {
                         .content(updateRequest))
                 .andExpect(status().isBadRequest());
         Patient unchangedPatient = patientRepository.findByUserEmailIgnoreCase("test@gmail.com").orElseThrow();
+        User unchangedUser = userRepository.findById(user.getId()).orElseThrow();
         assertAll(
-                () -> assertThat(unchangedPatient.getUser().getUsername()).isEqualTo("username"),
-                () -> assertThat(unchangedPatient.getUser().getEmail()).isEqualTo("test@gmail.com"),
-                () -> assertThat(unchangedPatient.getUser().getFirstName()).isEqualTo("Wiktor"),
-                () -> assertThat(unchangedPatient.getUser().getLastName()).isEqualTo("Test"),
+                () -> assertThat(unchangedUser.getUsername()).isEqualTo("username"),
+                () -> assertThat(unchangedUser.getEmail()).isEqualTo("test@gmail.com"),
+                () -> assertThat(unchangedUser.getFirstName()).isEqualTo("Wiktor"),
+                () -> assertThat(unchangedUser.getLastName()).isEqualTo("Test"),
                 () -> assertThat(unchangedPatient.getPhoneNumber()).isEqualTo("500500500"),
                 () -> assertThat(unchangedPatient.getBirthday()).isEqualTo(LocalDate.of(1999, 1, 1))
         );

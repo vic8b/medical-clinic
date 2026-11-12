@@ -14,10 +14,10 @@ import com.vic8b.medicalclinic.repository.AppointmentRepository;
 import com.vic8b.medicalclinic.repository.DoctorRepository;
 import com.vic8b.medicalclinic.repository.PatientRepository;
 import com.vic8b.medicalclinic.validator.AppointmentValidator;
-import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
