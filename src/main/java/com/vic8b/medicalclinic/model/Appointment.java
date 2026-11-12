@@ -22,10 +22,10 @@ public class Appointment {
     private LocalDateTime startDateTime;
     @Column(nullable = false)
     private LocalDateTime endDateTime;
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id")
     private Patient patient;
 

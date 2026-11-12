@@ -19,8 +19,8 @@ public class Doctor {
     private Long id;
     @Column(nullable = false)
     private String specialization;
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
     private User user;
     @ManyToMany
     @JoinTable(
