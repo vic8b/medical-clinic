@@ -1,6 +1,7 @@
 package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.facility.CreateFacilityCommand;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.facility.FacilityDto;
 import com.vic8b.medicalclinic.exception.facility.FacilityAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.facility.FacilityNotFoundException;
@@ -9,11 +10,9 @@ import com.vic8b.medicalclinic.model.Facility;
 import com.vic8b.medicalclinic.repository.FacilityRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,15 +40,13 @@ public class FacilityService {
         return facilityMapper.toDto(facility);
     }
 
-    public Set<FacilityDto> getFacilities(Long doctorId) {
+    public PageDto<FacilityDto> getFacilities(Long doctorId, Pageable pageable) {
         if (doctorId != null) {
-            return facilityRepository.findByDoctorsId(doctorId).stream()
-                    .map(facilityMapper::toDto)
-                    .collect(Collectors.toSet());
+            return PageDto.from(facilityRepository.findByDoctorsId(doctorId, pageable)
+                    .map(facilityMapper::toDto));
         }
-        return facilityRepository.findAll().stream()
-                .map(facilityMapper::toDto)
-                .collect(Collectors.toSet());
+        return PageDto.from(facilityRepository.findAll(pageable)
+                .map(facilityMapper::toDto));
     }
 
     private void validateNameAvailability(String name) {

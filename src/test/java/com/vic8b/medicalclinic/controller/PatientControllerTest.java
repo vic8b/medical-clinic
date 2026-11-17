@@ -2,6 +2,7 @@ package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
 import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
 import com.vic8b.medicalclinic.exception.user.UserAlreadyHasPatientException;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,21 +45,22 @@ class PatientControllerTest {
                 "500500500", LocalDate.of(1999, 1, 1));
         PatientDto secondPatientDto = new PatientDto("second@gmail.com", "Andrew", "Kowalski",
                 "600600600", LocalDate.of(1988, 12, 12));
-        when(patientService.getPatients()).thenReturn(List.of(patientDto, secondPatientDto));
+        PageDto<PatientDto> pageDto = new PageDto<>(List.of(patientDto, secondPatientDto), 0, 20, 2, 1);
+        when(patientService.getPatients(any(Pageable.class))).thenReturn(pageDto);
 
         // when + then
         mvc.perform(get("/patients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].email").value("test@gmail.com"))
-                .andExpect(jsonPath("$[0].firstName").value("Wiktor"))
-                .andExpect(jsonPath("$[0].lastName").value("Test"))
-                .andExpect(jsonPath("$[0].phoneNumber").value("500500500"))
-                .andExpect(jsonPath("$[0].birthday").value("1999-01-01"))
-                .andExpect(jsonPath("$[1].email").value("second@gmail.com"))
-                .andExpect(jsonPath("$[1].firstName").value("Andrew"))
-                .andExpect(jsonPath("$[1].lastName").value("Kowalski"))
-                .andExpect(jsonPath("$[1].phoneNumber").value("600600600"))
-                .andExpect(jsonPath("$[1].birthday").value("1988-12-12"));
+                .andExpect(jsonPath("$.content[0].email").value("test@gmail.com"))
+                .andExpect(jsonPath("$.content[0].firstName").value("Wiktor"))
+                .andExpect(jsonPath("$.content[0].lastName").value("Test"))
+                .andExpect(jsonPath("$.content[0].phoneNumber").value("500500500"))
+                .andExpect(jsonPath("$.content[0].birthday").value("1999-01-01"))
+                .andExpect(jsonPath("$.content[1].email").value("second@gmail.com"))
+                .andExpect(jsonPath("$.content[1].firstName").value("Andrew"))
+                .andExpect(jsonPath("$.content[1].lastName").value("Kowalski"))
+                .andExpect(jsonPath("$.content[1].phoneNumber").value("600600600"))
+                .andExpect(jsonPath("$.content[1].birthday").value("1988-12-12"));
     }
 
     @Test

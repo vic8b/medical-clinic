@@ -3,6 +3,7 @@ package com.vic8b.medicalclinic.controller;
 import com.vic8b.medicalclinic.command.appointment.CreateAppointmentCommand;
 import com.vic8b.medicalclinic.command.appointment.UpdateAppointmentCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.appointment.AppointmentDto;
 import com.vic8b.medicalclinic.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,10 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Appointments", description = "Appointments management endpoints")
 @RestController
@@ -28,9 +28,10 @@ public class AppointmentController {
     @Operation(summary = "Get all appointments, optionally filtered by doctor and patient")
     @ApiResponse(responseCode = "200", description = "Returned all appointments")
     @GetMapping
-    public List<AppointmentDto> getAppointments(@RequestParam(required = false) Long doctorId,
-                                                @RequestParam(required = false) Long patientId) {
-        return appointmentService.getAppointments(doctorId, patientId);
+    public PageDto<AppointmentDto> getAppointments(@RequestParam(required = false) Long doctorId,
+                                                   @RequestParam(required = false) Long patientId,
+                                                   Pageable pageable) {
+        return appointmentService.getAppointments(doctorId, patientId, pageable);
     }
 
     @Operation(summary = "Get an appointment by id")
@@ -47,8 +48,8 @@ public class AppointmentController {
     @Operation(summary = "Get all available appointments")
     @ApiResponse(responseCode = "200", description = "Returned all available appointments")
     @GetMapping("/available")
-    public List<AppointmentDto> getAvailableAppointments() {
-        return appointmentService.getAvailableAppointments();
+    public PageDto<AppointmentDto> getAvailableAppointments(Pageable pageable) {
+        return appointmentService.getAvailableAppointments(pageable);
     }
 
     @Operation(summary = "Create appointment")

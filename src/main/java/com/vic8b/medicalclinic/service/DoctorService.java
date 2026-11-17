@@ -2,6 +2,7 @@ package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.doctor.CreateDoctorCommand;
 import com.vic8b.medicalclinic.command.doctor.UpdateDoctorCommand;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
 import com.vic8b.medicalclinic.exception.doctor.DoctorHasAppointmentsException;
 import com.vic8b.medicalclinic.exception.doctor.DoctorNotFoundException;
@@ -19,11 +20,9 @@ import com.vic8b.medicalclinic.repository.UserRepository;
 import com.vic8b.medicalclinic.validator.UserValidator;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -79,15 +78,13 @@ public class DoctorService {
         return doctorMapper.toDto(findDoctorByIdOrThrow(id));
     }
 
-    public Set<DoctorDto> getDoctors(Long facilityId) {
+    public PageDto<DoctorDto> getDoctors(Long facilityId, Pageable pageable) {
         if (facilityId != null) {
-            return doctorRepository.findByFacilitiesId(facilityId).stream()
-                    .map(doctorMapper::toDto)
-                    .collect(Collectors.toSet());
+            return PageDto.from(doctorRepository.findByFacilitiesId(facilityId, pageable)
+                    .map(doctorMapper::toDto));
         }
-        return doctorRepository.findAll().stream()
-                .map(doctorMapper::toDto)
-                .collect(Collectors.toSet());
+        return PageDto.from(doctorRepository.findAll(pageable)
+                .map(doctorMapper::toDto));
     }
 
     private User findUserByIdOrThrow(Long id) {
