@@ -3,6 +3,7 @@ package com.vic8b.medicalclinic.controller;
 import com.vic8b.medicalclinic.command.ChangePasswordCommand;
 import com.vic8b.medicalclinic.command.user.CreateUserCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.user.UserDto;
 import com.vic8b.medicalclinic.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,10 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Users", description = "Users management endpoints")
 @RestController
@@ -28,8 +28,8 @@ public class UserController {
     @Operation(summary = "Get all users")
     @ApiResponse(responseCode = "200", description = "Returned all users")
     @GetMapping
-    public List<UserDto> getUsers() {
-        return userService.getUsers();
+    public PageDto<UserDto> getUsers(Pageable pageable) {
+        return userService.getUsers(pageable);
     }
 
     @Operation(summary = "Get a user by id")

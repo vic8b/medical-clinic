@@ -9,12 +9,10 @@ import java.util.List;
 @Entity
 @Table(name = "PATIENTS")
 @Getter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Patient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
     @Column(unique = true, nullable = false)
     private String idCardNo;
@@ -22,8 +20,8 @@ public class Patient {
     private String phoneNumber;
     @Column(nullable = false)
     private LocalDate birthday;
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
     private User user;
     @OneToMany(mappedBy = "patient")
     private List<Appointment> appointments;
@@ -33,6 +31,18 @@ public class Patient {
         this.idCardNo = idCardNo;
         this.phoneNumber = phoneNumber;
         this.birthday = birthday;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Patient other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 
     public void update(@NonNull String phoneNumber, @NonNull LocalDate birthday) {

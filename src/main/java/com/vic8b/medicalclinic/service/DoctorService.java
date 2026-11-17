@@ -2,7 +2,9 @@ package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.doctor.CreateDoctorCommand;
 import com.vic8b.medicalclinic.command.doctor.UpdateDoctorCommand;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
+import com.vic8b.medicalclinic.exception.doctor.DoctorHasAppointmentsException;
 import com.vic8b.medicalclinic.exception.doctor.DoctorNotFoundException;
 import com.vic8b.medicalclinic.exception.facility.FacilityNotFoundException;
 import com.vic8b.medicalclinic.exception.user.UserAlreadyHasDoctorException;
@@ -11,17 +13,16 @@ import com.vic8b.medicalclinic.mapper.DoctorMapper;
 import com.vic8b.medicalclinic.model.Doctor;
 import com.vic8b.medicalclinic.model.Facility;
 import com.vic8b.medicalclinic.model.User;
+import com.vic8b.medicalclinic.repository.AppointmentRepository;
 import com.vic8b.medicalclinic.repository.DoctorRepository;
 import com.vic8b.medicalclinic.repository.FacilityRepository;
 import com.vic8b.medicalclinic.repository.UserRepository;
 import com.vic8b.medicalclinic.validator.UserValidator;
-import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.Set;
-import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class DoctorService {
     private final DoctorMapper doctorMapper;
     private final UserValidator userValidator;
     private final FacilityRepository facilityRepository;
+    private final AppointmentRepository appointmentRepository;
 
     @Transactional
     public DoctorDto addDoctor(@NonNull CreateDoctorCommand createDoctorCommand) {
@@ -54,6 +56,9 @@ public class DoctorService {
     @Transactional
     public void removeDoctorById(@NonNull Long id) {
         Doctor doctor = findDoctorByIdOrThrow(id);
+        if (appointmentRepository.existsByDoctorId(id)) {
+            throw new DoctorHasAppointmentsException(id);
+        }
         doctor.getUser().clearDoctor();
         doctorRepository.delete(doctor);
     }
@@ -73,15 +78,13 @@ public class DoctorService {
         return doctorMapper.toDto(findDoctorByIdOrThrow(id));
     }
 
-    public Set<DoctorDto> getDoctors(Long facilityId) {
+    public PageDto<DoctorDto> getDoctors(Long facilityId, Pageable pageable) {
         if (facilityId != null) {
-            return doctorRepository.findByFacilitiesId(facilityId).stream()
-                    .map(doctorMapper::toDto)
-                    .collect(Collectors.toSet());
+            return PageDto.from(doctorRepository.findByFacilitiesId(facilityId, pageable)
+                    .map(doctorMapper::toDto));
         }
-        return doctorRepository.findAll().stream()
-                .map(doctorMapper::toDto)
-                .collect(Collectors.toSet());
+        return PageDto.from(doctorRepository.findAll(pageable)
+                .map(doctorMapper::toDto));
     }
 
     private User findUserByIdOrThrow(Long id) {

@@ -2,6 +2,7 @@ package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.ChangePasswordCommand;
 import com.vic8b.medicalclinic.command.user.CreateUserCommand;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.user.UserDto;
 import com.vic8b.medicalclinic.exception.user.UserHasAssignedDoctorException;
 import com.vic8b.medicalclinic.exception.user.UserHasAssignedPatientException;
@@ -10,12 +11,11 @@ import com.vic8b.medicalclinic.mapper.UserMapper;
 import com.vic8b.medicalclinic.model.User;
 import com.vic8b.medicalclinic.repository.UserRepository;
 import com.vic8b.medicalclinic.validator.UserValidator;
-import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -57,10 +57,9 @@ public class UserService {
         return userMapper.toDto(findUserOrThrow(id));
     }
 
-    public List<UserDto> getUsers() {
-        return userRepository.findAll().stream()
-                .map(userMapper::toDto)
-                .toList();
+    public PageDto<UserDto> getUsers(Pageable pageable) {
+        return PageDto.from(userRepository.findAll(pageable)
+                .map(userMapper::toDto));
     }
 
     private User findUserOrThrow(Long id) {

@@ -2,6 +2,7 @@ package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.appointment.CreateAppointmentCommand;
 import com.vic8b.medicalclinic.command.appointment.UpdateAppointmentCommand;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.appointment.AppointmentDto;
 import com.vic8b.medicalclinic.exception.appointment.AppointmentNotFoundException;
 import com.vic8b.medicalclinic.exception.doctor.DoctorNotFoundException;
@@ -14,13 +15,14 @@ import com.vic8b.medicalclinic.repository.AppointmentRepository;
 import com.vic8b.medicalclinic.repository.DoctorRepository;
 import com.vic8b.medicalclinic.repository.PatientRepository;
 import com.vic8b.medicalclinic.validator.AppointmentValidator;
-import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -85,16 +87,14 @@ public class AppointmentService {
         return appointmentMapper.toDto(findAppointmentByIdOrThrow(id));
     }
 
-    public List<AppointmentDto> getAppointments(Long doctorId, Long patientId) {
-        return findAppointments(doctorId, patientId).stream()
-                .map(appointmentMapper::toDto)
-                .toList();
+    public PageDto<AppointmentDto> getAppointments(Long doctorId, Long patientId, Pageable pageable) {
+        return PageDto.from(findAppointments(doctorId, patientId, pageable)
+                .map(appointmentMapper::toDto));
     }
 
-    public List<AppointmentDto> getAvailableAppointments() {
-        return appointmentRepository.findAllByPatientIsNullAndStartDateTimeAfter(LocalDateTime.now()).stream()
-                .map(appointmentMapper::toDto)
-                .toList();
+    public PageDto<AppointmentDto> getAvailableAppointments(Pageable pageable) {
+        return PageDto.from(appointmentRepository.findAllByPatientIsNullAndStartDateTimeAfter(LocalDateTime.now(), pageable)
+                .map(appointmentMapper::toDto));
     }
 
     private Appointment findAppointmentByIdOrThrow(Long id) {
@@ -112,16 +112,16 @@ public class AppointmentService {
                 .orElseThrow(() -> new PatientNotFoundException(patientId));
     }
 
-    private List<Appointment> findAppointments(Long doctorId, Long patientId) {
+    private Page<Appointment> findAppointments(Long doctorId, Long patientId, Pageable pageable) {
         if (patientId != null && doctorId != null) {
-            return appointmentRepository.findAllByDoctorIdAndPatientId(doctorId, patientId);
+            return appointmentRepository.findAllByDoctorIdAndPatientId(doctorId, patientId, pageable);
         }
         if (doctorId != null) {
-            return appointmentRepository.findAllByDoctorId(doctorId);
+            return appointmentRepository.findAllByDoctorId(doctorId, pageable);
         }
         if (patientId != null) {
-            return appointmentRepository.findAllByPatientId(patientId);
+            return appointmentRepository.findAllByPatientId(patientId, pageable);
         }
-        return appointmentRepository.findAll();
+        return appointmentRepository.findAll(pageable);
     }
 }

@@ -2,6 +2,7 @@ package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
 import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
 import com.vic8b.medicalclinic.exception.user.UserNotFoundException;
@@ -12,12 +13,11 @@ import com.vic8b.medicalclinic.repository.PatientRepository;
 import com.vic8b.medicalclinic.repository.UserRepository;
 import com.vic8b.medicalclinic.validator.PatientValidator;
 import com.vic8b.medicalclinic.validator.UserValidator;
-import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -61,10 +61,9 @@ public class PatientService {
         return patientMapper.toDto(findPatientByEmailOrThrow(email));
     }
 
-    public List<PatientDto> getPatients() {
-        return patientRepository.findAll().stream()
-                .map(patientMapper::toDto)
-                .toList();
+    public PageDto<PatientDto> getPatients(Pageable pageable) {
+        return PageDto.from(patientRepository.findAll(pageable)
+                .map(patientMapper::toDto));
     }
 
     private User findUserByIdOrThrow(Long id) {
