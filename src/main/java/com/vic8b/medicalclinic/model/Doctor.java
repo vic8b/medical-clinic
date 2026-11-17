@@ -9,13 +9,11 @@ import java.util.Set;
 @Entity
 @Table(name = "DOCTORS")
 @Getter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Doctor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
     @Column(nullable = false)
     private String specialization;
@@ -31,6 +29,18 @@ public class Doctor {
     private Set<Facility> facilities;
     @OneToMany(mappedBy = "doctor")
     private List<Appointment> appointments;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Doctor other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 
     public void update(@NonNull String specialization) {
         this.specialization = specialization;
