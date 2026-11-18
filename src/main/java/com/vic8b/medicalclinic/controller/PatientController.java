@@ -3,6 +3,7 @@ package com.vic8b.medicalclinic.controller;
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
 import com.vic8b.medicalclinic.service.PatientService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,10 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Patients", description = "Patients management endpoints")
 @RestController
@@ -28,8 +28,8 @@ public class PatientController {
     @Operation(summary = "Get all patients")
     @ApiResponse(responseCode = "200", description = "Returned all patients")
     @GetMapping
-    public List<PatientDto> getPatients() {
-        return patientService.getPatients();
+    public PageDto<PatientDto> getPatients(Pageable pageable) {
+        return patientService.getPatients(pageable);
     }
 
     @Operation(summary = "Get a patient by email")

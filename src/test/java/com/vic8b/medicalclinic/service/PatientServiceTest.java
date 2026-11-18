@@ -2,6 +2,7 @@ package com.vic8b.medicalclinic.service;
 
 import com.vic8b.medicalclinic.command.patient.CreatePatientCommand;
 import com.vic8b.medicalclinic.command.patient.UpdatePatientCommand;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.patient.PatientDto;
 import com.vic8b.medicalclinic.exception.patient.PatientAlreadyExistsException;
 import com.vic8b.medicalclinic.exception.patient.PatientNotFoundException;
@@ -18,6 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -144,20 +149,22 @@ class PatientServiceTest {
                 Patient.builder().idCardNo("5555").phoneNumber("600600600")
                         .birthday(LocalDate.of(1990, 1, 1)).build()
         );
-        when(patientRepository.findAll()).thenReturn(patients);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Patient> patientPage = new PageImpl<>(patients, pageable, patients.size());
+        when(patientRepository.findAll(pageable)).thenReturn(patientPage);
 
         // when
-        List<PatientDto> result = patientService.getPatients();
+        PageDto<PatientDto> result = patientService.getPatients(pageable);
 
         // then
         assertAll(
-                () -> assertThat(result).hasSize(2),
-                () -> assertThat(result.get(0).phoneNumber()).isEqualTo("500500500"),
-                () -> assertThat(result.get(0).birthday()).isEqualTo(LocalDate.of(1999, 1, 1)),
-                () -> assertThat(result.get(1).phoneNumber()).isEqualTo("600600600"),
-                () -> assertThat(result.get(1).birthday()).isEqualTo(LocalDate.of(1990, 1, 1))
+                () -> assertThat(result.content()).hasSize(2),
+                () -> assertThat(result.content().get(0).phoneNumber()).isEqualTo("500500500"),
+                () -> assertThat(result.content().get(0).birthday()).isEqualTo(LocalDate.of(1999, 1, 1)),
+                () -> assertThat(result.content().get(1).phoneNumber()).isEqualTo("600600600"),
+                () -> assertThat(result.content().get(1).birthday()).isEqualTo(LocalDate.of(1990, 1, 1))
         );
-        verify(patientRepository).findAll();
+        verify(patientRepository).findAll(pageable);
     }
 
     @Test

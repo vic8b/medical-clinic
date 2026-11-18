@@ -2,6 +2,7 @@ package com.vic8b.medicalclinic.controller;
 
 import com.vic8b.medicalclinic.command.facility.CreateFacilityCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.facility.FacilityDto;
 import com.vic8b.medicalclinic.service.FacilityService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,10 +13,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Set;
 
 @Tag(name = "Facilities", description = "Facilities management endpoints")
 @RestController
@@ -27,8 +27,8 @@ public class FacilityController {
     @Operation(summary = "Get facilities, optionally filtered by doctor")
     @ApiResponse(responseCode = "200", description = "Returned facilities")
     @GetMapping
-    public Set<FacilityDto> getFacilities(@RequestParam(required = false) Long doctorId) {
-        return facilityService.getFacilities(doctorId);
+    public PageDto<FacilityDto> getFacilities(@RequestParam(required = false) Long doctorId, Pageable pageable) {
+        return facilityService.getFacilities(doctorId, pageable);
     }
 
     @Operation(summary = "Get a facility by id")

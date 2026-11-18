@@ -3,6 +3,7 @@ package com.vic8b.medicalclinic.controller;
 import com.vic8b.medicalclinic.command.doctor.CreateDoctorCommand;
 import com.vic8b.medicalclinic.command.doctor.UpdateDoctorCommand;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
+import com.vic8b.medicalclinic.dto.PageDto;
 import com.vic8b.medicalclinic.dto.doctor.DoctorDto;
 import com.vic8b.medicalclinic.service.DoctorService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,10 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Set;
 
 @Tag(name = "Doctors", description = "Doctors management endpoints")
 @RestController
@@ -28,8 +28,8 @@ public class DoctorController {
     @Operation(summary = "Get all doctors, optionally filtered by facility")
     @ApiResponse(responseCode = "200", description = "Returned all doctors")
     @GetMapping
-    public Set<DoctorDto> getDoctors(@RequestParam(required = false) Long facilityId) {
-        return doctorService.getDoctors(facilityId);
+    public PageDto<DoctorDto> getDoctors(@RequestParam(required = false) Long facilityId, Pageable pageable) {
+        return doctorService.getDoctors(facilityId, pageable);
     }
 
     @Operation(summary = "Get a doctor by id")
