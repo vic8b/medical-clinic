@@ -17,6 +17,7 @@ import com.vic8b.medicalclinic.repository.PatientRepository;
 import com.vic8b.medicalclinic.validator.AppointmentValidator;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final DoctorRepository doctorRepository;
@@ -35,17 +37,22 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentDto addAppointment(@NonNull CreateAppointmentCommand command) {
+        log.info("Creating appointment for doctorId={}, startTime={}, endTime={}",
+                command.doctorId(), command.startDateTime(), command.endDateTime());
         Doctor doctor = findDoctorByIdOrThrow(command.doctorId());
         validator.validateStartTimeOfTheVisit(command.startDateTime(), command.endDateTime());
         validator.validateDoctorAvailability(doctor, command.startDateTime(), command.endDateTime());
         Appointment appointment = appointmentMapper.toEntity(command);
         appointment.assignDoctor(doctor);
         appointmentRepository.save(appointment);
+        log.info("Appointment created: appointmentId={}, doctorId={}, startTime={}, endTime={}",
+                appointment.getId(), command.doctorId(), command.startDateTime(), command.endDateTime());
         return appointmentMapper.toDto(appointment);
     }
 
     @Transactional
     public AppointmentDto updateAppointment(@NonNull Long id, @NonNull UpdateAppointmentCommand command) {
+        log.info("Updating appointment for appointmentId={}", id);
         Appointment appointment = findAppointmentByIdOrThrow(id);
         Doctor assignedDoctor = appointment.getDoctor();
         Doctor doctor = findDoctorByIdOrThrow(command.doctorId());
@@ -57,30 +64,38 @@ public class AppointmentService {
         appointment.update(command.startDateTime(), command.endDateTime(), doctor);
         appointment.assignDoctor(doctor);
         appointmentRepository.save(appointment);
+        log.info("Appointment updated: appointmentId={}, doctorId={}, startTime={}, endTime={}",
+                appointment.getId(), command.doctorId(), command.startDateTime(), command.endDateTime());
         return appointmentMapper.toDto(appointment);
     }
 
     @Transactional
     public void removeAppointmentById(@NonNull Long id) {
+        log.info("Removing appointment for appointmentId={}", id);
         Appointment appointment = findAppointmentByIdOrThrow(id);
         appointment.clearAppointment();
         appointmentRepository.delete(appointment);
+        log.info("Appointment removed for appointmentId={}", id);
     }
 
     @Transactional
     public AppointmentDto assignPatient(@NonNull Long appointmentId, @NonNull Long patientId) {
+        log.info("Assigning patient for appointmentId={}, patientId={}", appointmentId, patientId);
         Appointment appointment = findAppointmentByIdOrThrow(appointmentId);
         Patient patient = findPatientByIdOrThrow(patientId);
         validator.validateAppointmentIsNotInPast(appointment);
         appointment.assignPatient(patient);
         appointmentRepository.save(appointment);
+        log.info("Patient assigned for appointmentId={}, patientId={}", appointmentId, patientId);
         return appointmentMapper.toDto(appointment);
     }
 
     @Transactional
     public void cancelAppointmentById(@NonNull Long id) {
+        log.info("Cancelling appointment for appointmentId={}", id);
         Appointment appointment = findAppointmentByIdOrThrow(id);
         appointment.cancelAppointment();
+        log.info("Appointment cancelled for appointmentId={}", id);
     }
 
     public AppointmentDto getAppointmentById(@NonNull Long id) {

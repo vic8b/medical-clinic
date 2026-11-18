@@ -3,6 +3,7 @@ package com.vic8b.medicalclinic.handler;
 import com.vic8b.medicalclinic.dto.ErrorMessageDto;
 import com.vic8b.medicalclinic.exception.MedicalClinicException;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy'T'HH:mm:ss");
 
@@ -20,6 +22,7 @@ public class GlobalExceptionHandler {
     public ErrorMessageDto handleUnexpectedException(Exception exception, HttpServletResponse response) {
         int exceptionStatusValue = HttpStatus.INTERNAL_SERVER_ERROR.value();
         response.setStatus(exceptionStatusValue);
+        log.error("Unexpected error", exception);
         return ErrorMessageDto.of("Unknown error", exceptionStatusValue, getCurrentTimeStamp());
     }
 
@@ -27,6 +30,7 @@ public class GlobalExceptionHandler {
     public ErrorMessageDto handleMedicalClinicException(MedicalClinicException exception, HttpServletResponse response) {
         int exceptionStatusValue = exception.getStatus().value();
         response.setStatus(exceptionStatusValue);
+        log.warn("Medical clinic exception handled: type={}, message={}", exception.getClass().getSimpleName(), exception.getMessage());
         return ErrorMessageDto.of(exception.getMessage(), exceptionStatusValue, getCurrentTimeStamp());
     }
 
@@ -39,6 +43,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
                 .toList();
+        log.warn("Validation for request failed: errors={}", errors);
         return ErrorMessageDto.withErrors("Validation failed", exceptionStatusValue,
                 getCurrentTimeStamp(), errors);
     }
